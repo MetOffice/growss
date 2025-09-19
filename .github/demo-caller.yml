@@ -1,0 +1,11 @@
+name: Demo Caller Workflow
+
+on:
+  push:
+    branches:
+      - demo
+jobs:
+  call-demo-workflow:
+    uses: ../../demo/demo-callable.yml
+    with:
+      name: 'SSD Team'
