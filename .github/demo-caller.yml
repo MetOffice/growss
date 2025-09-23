@@ -1,9 +1,10 @@
 name: Demo Caller Workflow
 
 on:
-  push:
-    branches:
-      - demo
+ workflow_dispatch:
+    push:
+      branches:
+        - demo
 jobs:
   call-demo-workflow:
     uses: ../../demo/demo-callable.yml
