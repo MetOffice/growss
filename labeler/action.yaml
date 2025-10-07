@@ -1,0 +1,72 @@
+name: Labeler
+description: A GitHub action to manage PR/issue labels
+inputs:
+  token:
+    description: Token with pull requests/issues write permissions
+    required: true
+    default: ${{ github.token }}
+  repository:
+    description: Repository name in `owner/repo` format
+    required: true
+    default: ${{ github.repository }}
+  issue:
+    description: Issue or pull request number
+    required: true
+  label:
+    description: Label name
+    required: true
+  action:
+    description: |
+      Action which should be performed with given label.
+      Options: `add`, `remove`
+    required: true
+  suppress:
+    description: Whether to suppress errors for failed requests or not.
+    required: true
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Validate inputs
+      shell: python
+      run: |
+        action_opts = ["remove", "add"]
+        action = "${{ inputs.action }}"
+        if action not in action_opts:
+            raise ValueError(f"Action has to be one of {action_opts}.")
+
+    - name: Remove label `${{ inputs.label }}` from issue ${{ inputs.issue }}
+      if: ${{ inputs.action == 'remove' }}
+      shell: python
+      run: |
+        from urllib.request import Request, urlopen
+        import sys
+        url = "https://api.github.com/repos/${{ inputs.repository }}/issues/${{ inputs.issue }}/labels/${{ inputs.label }}"
+        response = urlopen(Request(url, method="DELETE", headers={"Authorization": "token ${{ inputs.token }}"}))
+        if response.code == 200:
+            print("Label removed")
+        else:
+            if "${{ inputs.suppress }}" == "false":
+                print(f"::error::{response.code}: Error removing label.")
+                sys.exit(1)
+            print(f"::warning::{response.code}: Error removing label.")
+
+    - name: Add label `${{ inputs.label }}` to issue ${{ inputs.issue }}
+      if: ${{ inputs.action == 'add' }}
+      shell: python
+      run: |
+        from urllib.request import Request, urlopen
+        import sys
+        import json
+        url = "https://api.github.com/repos/${{ inputs.repository }}/issues/${{ inputs.issue }}/labels"
+        body = {"labels": ["${{ inputs.label }}"]}
+        data = bytes(json.dumps(body), encoding="utf-8")
+        response = urlopen(Request(url, method="POST", headers={"Authorization": "token ${{ inputs.token }}"}, data=data))
+        if response.code == 200:
+            print("Label added")
+        else:
+          if "${{ inputs.suppress }}" == "false":
+              print(f"::error::{response.code}: Error adding label.")
+              sys.exit(1)
+          print(f"::warning::{response.code}: Error adding label.")
