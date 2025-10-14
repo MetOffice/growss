@@ -17,7 +17,7 @@ jobs:
         - id: extract
           name: Extract repo
           uses: actions/checkout@v4
-        - id: setup_ennironment
+        - id: setup_environment
           name: Setup Pythomn environment
           uses: actions/setup-python@v5
           with:
