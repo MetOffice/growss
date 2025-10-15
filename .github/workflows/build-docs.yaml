@@ -39,10 +39,10 @@ jobs:
         - id: permissions
           name: Set permissions
           run: chmod -c -R +rX "documentation/build/html"
-          
+
         - id: deploy
           name: Upload artifact
-          if: ${{ (github.event_name == 'push' || github.event_name == 'merge_group') && github.ref_name == 'main'}}
+          if: ${{ (github.event_name == 'push' || github.event_name == 'merge_group')}}
           uses: actions/upload-pages-artifact@v3
           with:
              name: github-pages
