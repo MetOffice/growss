@@ -42,7 +42,6 @@ jobs:
 
         - id: deploy
           name: Upload artifact
-          if: ${{ (github.event_name == 'push' || github.event_name == 'merge_group')}}
           uses: actions/upload-pages-artifact@v3
           with:
              name: github-pages
