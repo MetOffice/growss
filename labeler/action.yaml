@@ -1,5 +1,5 @@
 name: Labeler
-description: A GitHub action to manage PR/issue labels
+description: A GitHub action to manage Issue/PR labels
 inputs:
   token:
     description: Token with pull requests/issues write permissions
@@ -38,35 +38,26 @@ runs:
 
     - name: Remove label `${{ inputs.label }}` from issue ${{ inputs.issue }}
       if: ${{ inputs.action == 'remove' }}
-      shell: python
+      shell: bash
       run: |
-        from urllib.request import Request, urlopen
-        import sys
-        url = "https://api.github.com/repos/${{ inputs.repository }}/issues/${{ inputs.issue }}/labels/${{ inputs.label }}"
-        response = urlopen(Request(url, method="DELETE", headers={"Authorization": "token ${{ inputs.token }}"}))
-        if response.code == 200:
-            print("Label removed")
-        else:
-            if "${{ inputs.suppress }}" == "false":
-                print(f"::error::{response.code}: Error removing label.")
-                sys.exit(1)
-            print(f"::warning::{response.code}: Error removing label.")
+        set -e
+        if gh issue --repo "${{ inputs.repository }}" view "${{ inputs.issue }}" > /dev/null 2>&1; then
+          gh issue --repo "${{ inputs.repository }}" edit "${{ inputs.issue }}" --remove-label "${{ inputs.label }}"
+        else
+          gh pr --repo "${{ inputs.repository }}" edit "${{ inputs.issue }}" --remove-label "${{ inputs.label }}"
+        fi
+      env:
+        GH_TOKEN: ${{ inputs.token }}
 
     - name: Add label `${{ inputs.label }}` to issue ${{ inputs.issue }}
       if: ${{ inputs.action == 'add' }}
-      shell: python
+      shell: bash
       run: |
-        from urllib.request import Request, urlopen
-        import sys
-        import json
-        url = "https://api.github.com/repos/${{ inputs.repository }}/issues/${{ inputs.issue }}/labels"
-        body = {"labels": ["${{ inputs.label }}"]}
-        data = bytes(json.dumps(body), encoding="utf-8")
-        response = urlopen(Request(url, method="POST", headers={"Authorization": "token ${{ inputs.token }}"}, data=data))
-        if response.code == 200:
-            print("Label added")
-        else:
-          if "${{ inputs.suppress }}" == "false":
-              print(f"::error::{response.code}: Error adding label.")
-              sys.exit(1)
-          print(f"::warning::{response.code}: Error adding label.")
+        set -e
+        if gh issue --repo "${{ inputs.repository }}" view "${{ inputs.issue }}" > /dev/null 2>&1; then
+          gh issue --repo "${{ inputs.repository }}" edit "${{ inputs.issue }}" --add-label "${{ inputs.label }}"
+        else
+          gh pr --repo "${{ inputs.repository }}" edit "${{ inputs.issue }}" --add-label "${{ inputs.label }}"
+        fi
+      env:
+        GH_TOKEN: ${{ inputs.token }}

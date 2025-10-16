@@ -1,4 +1,6 @@
-# GitHub action to manage PR/issue labels
+# GitHub action to manage Issue/PR labels
+
+A generic composite action to add or remove a label from a PR
 
 ## Usage
 
@@ -9,7 +11,7 @@ Adds label `bug` to PR/issue no. 1 in `owner/repo` repository.
 ```yaml
 steps:
   - name: Add PR label
-    uses: MetOffice/reusable-workflows/labeler  # @v1
+    uses: MetOffice/growss/labeler
     with:
       token: ${{ secrets.MY_TOKEN }}
       repository: owner/repo
@@ -25,7 +27,7 @@ Removes label `bug` from PR/issue no. 1 in `owner/repo` repository.
 ```yaml
 steps:
   - name: Remove PR label
-    uses: MetOffice/reusable-workflows/labeler  # @v1
+    uses: MetOffice/growss/labeler
     with:
       token: ${{ secrets.MY_TOKEN }}
       repository: owner/repo
