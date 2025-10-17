@@ -4,13 +4,20 @@
 #  under which the code may be used.
 # ------------------------------------------------------------------------------
 
-name: Build Docs
+name: Publish Sphinx Docs
 
 on:
   workflow_call:
 
+  inputs:
+   docs-directory:
+      description: 'Directory containing the documentation to build'
+      required: true
+      type: string
+
 jobs:
-  build-html:
+
+  build-sphinx-html:
      name: HTML Docs
      runs-on: ubuntu-24.04
      steps:
@@ -33,12 +40,12 @@ jobs:
 
         - id: sphinx_build
           name: Build sphinx HTML docs
-          working-directory: ./documentation
+          working-directory: ${{ inputs.docs-directory }}
           run: make html
 
         - id: permissions
           name: Set permissions
-          run: chmod -c -R +rX "documentation/build/html"
+          run: chmod -c -R +rX "${{ inputs.docs-directory }}/build/html"
 
         - id: deploy
           name: Upload artifact
@@ -46,5 +53,26 @@ jobs:
           uses: actions/upload-pages-artifact@v3
           with:
              name: github-pages
-             path: documentation/build/html
+             path: ${{ inputs.docs-directory }}/build/html
              retention-days: 1
+
+  deploy-sphinx-docs:
+
+     environment:
+       name: github-pages
+
+     permissions:
+        pages: write
+        id-token: write
+
+     runs-on: ubuntu-24.04
+     needs: build-sphinx-html
+     steps:
+
+        - name: Configure GitHub Pages
+          id: Configure
+          uses: actions/configure-pages@v4
+
+        - name: Deploy to GitHub Pages
+          id: Deploy
+          uses: actions/deploy-pages@v4
