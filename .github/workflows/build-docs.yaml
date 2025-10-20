@@ -15,6 +15,12 @@ on:
       required: true
       type: string
 
+   requirements:
+      description: 'The path to the requirements file to install dependencies from'
+      required: false
+      type: string
+      default: 'dependencies/build-sphinx-docs/requirements.txt'
+
 jobs:
 
   build-sphinx-html:
@@ -37,15 +43,14 @@ jobs:
           uses: actions/cache@v4
           with:
             path: ~/.cache/pip
-            key: ${{ runner.os }}-pip-${{ hashFiles('.github/workflows/build-docs.yaml') }}
+            key: ${{ runner.os }}-pip-${{ hashFiles(${{ inputs.requirements }}) }}
             restore-keys: |
               ${{ runner.os }}-pip-
 
         - id: finetune_environment
           name: Install Python packages
           run: |
-            python3 -m pip install --upgrade pip
-            python3 -m pip install sphinx==8.1.0 pydata-sphinx-theme==0.16.1 sphinx-sitemap==2.6.0 sphinx_design==0.6.1
+            python3 -m pip install --upgrade pip && python3 -m pip install -r ${{ inputs.requirements }}
 
         - id: sphinx_build
           name: Build sphinx HTML docs
