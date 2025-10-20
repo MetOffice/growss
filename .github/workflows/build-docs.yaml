@@ -32,6 +32,15 @@ jobs:
           with:
             python-version: '3.12'
 
+        - id: caching
+          name: Cache pip
+          uses: actions/cache@v4
+          with:
+            path: ~/.cache/pip
+            key: ${{ runner.os }}-pip-${{ hashFiles('.github/workflows/build-docs.yaml') }}
+            restore-keys: |
+              ${{ runner.os }}-pip-
+
         - id: finetune_environment
           name: Install Python packages
           run: |
