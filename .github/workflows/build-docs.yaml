@@ -24,7 +24,7 @@ on:
 jobs:
 
   build-sphinx-html:
-     name: HTML Docs
+     name: build sphinx docs
      runs-on: ubuntu-24.04
      steps:
 
@@ -71,7 +71,7 @@ jobs:
              retention-days: 1
 
   deploy-sphinx-docs:
-
+     name: deploy sphinx docs to github pages
      environment:
        name: github-pages
 
