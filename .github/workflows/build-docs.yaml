@@ -10,6 +10,8 @@ on:
   workflow_call:
 
   inputs:
+   # The inputs are the parameters that can be passed
+   # to this resuable workflow by the calling workflow.
    docs-directory:
       description: 'Directory containing the documentation to build'
       required: true
@@ -28,6 +30,7 @@ jobs:
      runs-on: ubuntu-24.04
      steps:
 
+       # Repository checkout and python environment setup
         - id: extract
           name: Extract repo
           uses: actions/checkout@v4
@@ -38,6 +41,9 @@ jobs:
           with:
             python-version: '3.12'
 
+        # The caching step speeds up subsequent runs by caching
+        # previously installed packages. It generates a new cache
+        # only if the requirements file has changed.
         - id: caching
           name: Cache pip
           uses: actions/cache@v4
@@ -47,7 +53,10 @@ jobs:
             restore-keys: |
               ${{ runner.os }}-pip-
 
-        - id: finetune_environment
+        # The installation of dependencies is then done by
+        # upgrading pip and installing the packages from
+        # the requirements file.
+        - id: dependencies
           name: Install Python packages
           run: |
             python3 -m pip install --upgrade pip && python3 -m pip install -r ${{ inputs.requirements }}
@@ -57,11 +66,15 @@ jobs:
           working-directory: ${{ inputs.docs-directory }}
           run: make html
 
+        # Permissions are set to allow GitHub Pages to access the built files
         - id: permissions
           name: Set permissions
           run: chmod -c -R +rX "${{ inputs.docs-directory }}/build/html"
 
-        - id: deploy
+        # The artifact containing the built HTML files is uploaded
+        # to GitHub Pages only when the workflow is triggered by a push
+        # or a merge group event on the main branch.
+        - id: upload_artifact
           name: Upload artifact
           if: ${{ (github.event_name == 'push' || github.event_name == 'merge_group') && github.ref_name == 'main'}}
           uses: actions/upload-pages-artifact@v3
@@ -71,7 +84,9 @@ jobs:
              retention-days: 1
 
   deploy-sphinx-docs:
+
      name: deploy sphinx docs to github pages
+     # Defines the deployment target as GitHub Pages
      environment:
        name: github-pages
 
@@ -82,7 +97,7 @@ jobs:
      runs-on: ubuntu-24.04
      needs: build-sphinx-html
      steps:
-
+        # Configuration and deployment to GitHub Pages
         - name: Configure GitHub Pages
           id: Configure
           uses: actions/configure-pages@v4
