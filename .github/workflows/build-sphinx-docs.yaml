@@ -1,0 +1,86 @@
+# ------------------------------------------------------------------------------
+#  (c) Crown copyright Met Office. All rights reserved.
+#  The file LICENCE, distributed with this code, contains details of the terms
+#  under which the code may be used.
+# ------------------------------------------------------------------------------
+
+name: Build Sphinx Docs
+
+on:
+  workflow_call:
+
+  inputs:
+   # The inputs are the parameters that can be passed
+   # to this resuable workflow by the calling workflow.
+   docs-directory:
+      description: 'Directory containing the documentation to build'
+      required: false
+      type: string
+      default: './documentation'
+
+   requirements:
+      description: 'The path to the requirements file to install dependencies from'
+      required: false
+      type: string
+      default: '.github/dependencies/build-sphinx-docs/requirements.txt'
+
+jobs:
+
+  build-sphinx-docs:
+     name: build sphinx docs
+     runs-on: ubuntu-24.04
+     steps:
+
+       # Repository checkout and python environment setup
+        - id: extract
+          name: Extract repo
+          uses: actions/checkout@v4
+
+        - id: setup_environment
+          name: Setup Python environment
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.12'
+
+        # The caching step speeds up subsequent runs by caching
+        # previously installed packages. It generates a new cache
+        # only if the requirements file has changed.
+        - id: caching
+          name: Cache pip
+          uses: actions/cache@v4
+          with:
+            path: ~/.cache/pip
+            key: ${{ runner.os }}-pip-${{ hashFiles(${{ inputs.requirements }}) }}
+            restore-keys: |
+              ${{ runner.os }}-pip-
+
+        # The installation of dependencies is then done by
+        # upgrading pip and installing the packages from
+        # the requirements file.
+        - id: dependencies
+          name: Install Python packages
+          run: |
+            python3 -m pip install --upgrade pip && \
+            python3 -m pip install -r ${{ inputs.requirements }}
+
+        - id: sphinx_build
+          name: Build sphinx HTML docs
+          working-directory: ${{ inputs.docs-directory }}
+          run: make html SPHINXOPTS="-W --keep-going -n"
+
+        # Permissions are set to allow GitHub Pages to access the built files
+        - id: permissions
+          name: Set permissions
+          run: chmod -c -R +rX "${{ inputs.docs-directory }}/build/html"
+
+        # The artifact containing the built HTML files is uploaded
+        # to GitHub Pages only when the workflow is triggered by a push
+        # or a merge group event on the main branch.
+        - id: upload_artifact
+          name: Upload artifact
+          if: ${{ (github.event_name == 'push' || github.event_name == 'merge_group') && github.ref_name == 'main'}}
+          uses: actions/upload-pages-artifact@v3
+          with:
+             name: github-pages
+             path: ${{ inputs.docs-directory }}/build/html
+             retention-days: 1
