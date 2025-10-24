@@ -59,7 +59,8 @@ jobs:
         - id: dependencies
           name: Install Python packages
           run: |
-            python3 -m pip install --upgrade pip && python3 -m pip install -r ${{ inputs.requirements }}
+            python3 -m pip install --upgrade pip && \
+            python3 -m pip install -r ${{ inputs.requirements }}
 
         - id: sphinx_build
           name: Build sphinx HTML docs
