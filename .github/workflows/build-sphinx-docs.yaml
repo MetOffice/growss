@@ -9,20 +9,20 @@ name: Build Sphinx Docs
 on:
   workflow_call:
 
-  inputs:
-    # The inputs are the parameters that can be passed
-    # to this resuable workflow by the calling workflow.
-    docs-directory:
-        description: 'Directory containing the documentation to build'
-        required: false
-        type: string
-        default: './documentation'
+    inputs:
+      # The inputs are the parameters that can be passed
+      # to this resuable workflow by the calling workflow.
+      docs-directory:
+          description: 'Directory containing the documentation to build'
+          required: false
+          type: string
+          default: './documentation'
 
-    requirements:
-        description: 'The path to the requirements file to install dependencies from'
-        required: false
-        type: string
-        default: '.github/dependencies/build-sphinx-docs/requirements.txt'
+      requirements:
+          description: 'The path to the requirements file to install dependencies from'
+          required: false
+          type: string
+          default: '.github/dependencies/build-sphinx-docs/requirements.txt'
 
 jobs:
 
