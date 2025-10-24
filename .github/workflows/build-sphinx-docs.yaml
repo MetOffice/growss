@@ -4,7 +4,7 @@
 #  under which the code may be used.
 # ------------------------------------------------------------------------------
 
-name: Publish Sphinx Docs
+name: Build Sphinx Docs
 
 on:
   workflow_call:
@@ -14,8 +14,9 @@ on:
    # to this resuable workflow by the calling workflow.
    docs-directory:
       description: 'Directory containing the documentation to build'
-      required: true
+      required: false
       type: string
+      default: './documentation'
 
    requirements:
       description: 'The path to the requirements file to install dependencies from'
@@ -25,7 +26,7 @@ on:
 
 jobs:
 
-  build-sphinx-html:
+  build-sphinx-docs:
      name: build sphinx docs
      runs-on: ubuntu-24.04
      steps:
@@ -83,26 +84,3 @@ jobs:
              name: github-pages
              path: ${{ inputs.docs-directory }}/build/html
              retention-days: 1
-
-  deploy-sphinx-docs:
-
-     name: deploy sphinx docs to github pages
-     # Defines the deployment target as GitHub Pages
-     environment:
-       name: github-pages
-
-     permissions:
-        pages: write
-        id-token: write
-
-     runs-on: ubuntu-24.04
-     needs: build-sphinx-html
-     steps:
-        # Configuration and deployment to GitHub Pages
-        - name: Configure GitHub Pages
-          id: Configure
-          uses: actions/configure-pages@v4
-
-        - name: Deploy to GitHub Pages
-          id: Deploy
-          uses: actions/deploy-pages@v4
