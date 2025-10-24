@@ -65,7 +65,7 @@ jobs:
         - id: sphinx_build
           name: Build sphinx HTML docs
           working-directory: ${{ inputs.docs-directory }}
-          run: make html
+          run: make html SPHINXOPTS="-W --keep-going -n"
 
         # Permissions are set to allow GitHub Pages to access the built files
         - id: permissions
