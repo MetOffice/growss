@@ -21,8 +21,8 @@ on:
       requirements:
           description: 'The path to the requirements file to install dependencies from'
           required: false
-          type: string
-          default: 'Pierre-siddall/growss/.github/dependencies/build-sphinx-docs/requirements.txt'
+          type: string-
+          default: 'Pierre-siddall/growss/.github/dependencies/build-sphinx-docs/requirements.txt@fix-build-sphinx-docs'
 
 jobs:
 
