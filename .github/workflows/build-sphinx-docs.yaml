@@ -43,6 +43,9 @@ on:
           type: string
           default: '${{inputs.docs-directory}}/build/html'
 
+permissions:
+  contents: read
+  
 jobs:
 
   build-sphinx-docs:
