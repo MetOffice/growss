@@ -22,7 +22,7 @@ on:
           description: 'The path to the requirements file to install dependencies from'
           required: false
           type: string
-          default: '.github/dependencies/build-sphinx-docs/requirements.txt'
+          default: './.github/dependencies/build-sphinx-docs/requirements.txt'
 
 jobs:
 
