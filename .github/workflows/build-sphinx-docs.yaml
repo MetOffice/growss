@@ -17,7 +17,7 @@ on:
           description: 'The repository to checkout the code from'
           required: false
           type: string
-          default: 'Pierre-siddall/growss'
+          default: 'MetOffice/growss'
 
       checkout-branch:
           description: 'The branch to checkout the repository from'
