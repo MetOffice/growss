@@ -8,79 +8,77 @@ name: Build Sphinx Docs
 
 on:
   workflow_call:
-
-  inputs:
-   # The inputs are the parameters that can be passed
-   # to this resuable workflow by the calling workflow.
-   docs-directory:
-      description: 'Directory containing the documentation to build'
-      required: false
-      type: string
-      default: './documentation'
-
-   requirements:
-      description: 'The path to the requirements file to install dependencies from'
-      required: false
-      type: string
-      default: '.github/dependencies/build-sphinx-docs/requirements.txt'
+    inputs:
+      docs-directory:
+        description: 'Directory containing the documentation to build'
+        required: false
+        type: string
+        default: './documentation'
+      requirements:
+        description: 'Path to the requirements file to install dependencies from'
+        required: false
+        type: string
+        default: './build-sphinx-docs/requirements.txt'
+      sphinx-opts:
+        description: 'Additional options to pass to the Sphinx build command'
+        required: false
+        type: string
+        default: '-W --keep-going -n'
+      build-directory:
+        description: 'Directory to output the html documentation to'
+        required: false
+        type: string
+        default: '${{inputs.docs-directory}}/build'
 
 jobs:
-
   build-sphinx-docs:
-     name: build sphinx docs
-     runs-on: ubuntu-24.04
-     steps:
+    name: Build Sphinx Docs
+    runs-on: ubuntu-24.04
+    env:
+      DOCS_DIR: ${{ inputs.docs-directory }}
+      REQS_FILE: ${{ inputs.requirements }}
+      SPHINX_OPTS: ${{ inputs.sphinx-opts }}
+      BUILD_DIR: ${{ inputs.build-directory }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-       # Repository checkout and python environment setup
-        - id: extract
-          name: Extract repo
-          uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
 
-        - id: setup_environment
-          name: Setup Python environment
-          uses: actions/setup-python@v5
-          with:
-            python-version: '3.12'
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles(env.REQS_FILE) }}
+          restore-keys: ${{ runner.os }}-pip-
 
-        # The caching step speeds up subsequent runs by caching
-        # previously installed packages. It generates a new cache
-        # only if the requirements file has changed.
-        - id: caching
-          name: Cache pip
-          uses: actions/cache@v4
-          with:
-            path: ~/.cache/pip
-            key: ${{ runner.os }}-pip-${{ hashFiles(${{ inputs.requirements }}) }}
-            restore-keys: |
-              ${{ runner.os }}-pip-
+      - name: Minimize pip cache
+        run: python3 -m pip cache purge || true
 
-        # The installation of dependencies is then done by
-        # upgrading pip and installing the packages from
-        # the requirements file.
-        - id: dependencies
-          name: Install Python packages
-          run: |
-            python3 -m pip install --upgrade pip && \
-            python3 -m pip install -r ${{ inputs.requirements }}
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r "$REQS_FILE"
 
-        - id: sphinx_build
-          name: Build sphinx HTML docs
-          working-directory: ${{ inputs.docs-directory }}
-          run: make html SPHINXOPTS="-W --keep-going -n"
+      - name: Lint Sphinx docs
+        working-directory: ${{ env.DOCS_DIR }}
+        run: sphinx-lint .
 
-        # Permissions are set to allow GitHub Pages to access the built files
-        - id: permissions
-          name: Set permissions
-          run: chmod -c -R +rX "${{ inputs.docs-directory }}/build/html"
+      - name: Build Sphinx HTML docs
+        working-directory: ${{ env.DOCS_DIR }}
+        run: |
+          make html SPHINXOPTS="$SPHINX_OPTS" BUILDDIR="$BUILD_DIR"
 
-        # The artifact containing the built HTML files is uploaded
-        # to GitHub Pages only when the workflow is triggered by a push
-        # or a merge group event on the main branch.
-        - id: upload_artifact
-          name: Upload artifact
-          if: ${{ (github.event_name == 'push' || github.event_name == 'merge_group') && github.ref_name == 'main'}}
-          uses: actions/upload-pages-artifact@v3
-          with:
-             name: github-pages
-             path: ${{ inputs.docs-directory }}/build/html
-             retention-days: 1
+      - name: Set permissions for GitHub Pages
+        run: chmod -c -R +rX "$BUILD_DIR/html"
+
+      - name: Upload artifact to GitHub Pages
+        if: ${{ (github.event_name == 'push' || github.event_name == 'merge_group') && github.ref_name == 'main'}}
+        uses: actions/upload-pages-artifact@v4
+        with:
+          name: github-pages
+          path: "$BUILD_DIR/html"
+          retention-days: 1
