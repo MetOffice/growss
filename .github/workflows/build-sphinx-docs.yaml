@@ -36,7 +36,7 @@ jobs:
           name: Extract repo
           uses: actions/checkout@v4
           with:
-            ref: ${{github.ref}}
+            ref: fix-build-sphinx-docs
 
         - id: setup_environment
           name: Setup Python environment
