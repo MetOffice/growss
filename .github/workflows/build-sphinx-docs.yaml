@@ -18,7 +18,7 @@ on:
         description: 'Path to the requirements file to install dependencies from'
         required: false
         type: string
-        default: './build-sphinx-docs/requirements.txt'
+        default: 'build-sphinx-docs/requirements.txt'
       sphinx-opts:
         description: 'Additional options to pass to the Sphinx build command'
         required: false
@@ -41,7 +41,16 @@ jobs:
       BUILD_DIR: ${{ inputs.build-directory }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      - name: Checkout growss
+        if: ${{ inputs.requirements == '' || inputs.requirements == null }}
+        uses: actions/checkout@v5
+        with:
+          repository: MetOffice/growss
+          sparse-checkout: ${{ env.REQS_FILE }}
+          # get a precise list of files to fetch, instead of broad patterns
+          sparse-checkout-cone-mode: false
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v6
