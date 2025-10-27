@@ -23,7 +23,7 @@ on:
           description: 'The branch to checkout the repository from'
           required: false
           type: string
-          default: 'fix-build-sphinx-docs'
+          default: 'main
 
       docs-directory:
           description: 'Directory containing the documentation to build'
@@ -42,7 +42,7 @@ on:
           required: false
           type: string
           default: '${{inputs.docs-directory}}/build/html'
-          
+
 permissions:
   contents: read
   pages: write
