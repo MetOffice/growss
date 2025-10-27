@@ -13,7 +13,13 @@ on:
       # The inputs are the parameters that can be passed
       # to this resuable workflow by the calling workflow.
 
-      branch:
+      checkout-repo:
+          description: 'The repository to checkout the code from'
+          required: false
+          type: string
+          default: 'Pierre-siddall/growss'
+
+      checkout-branch:
           description: 'The branch to checkout the repository from'
           required: false
           type: string
@@ -31,6 +37,12 @@ on:
           type: string
           default: '.github/dependencies/build-sphinx-docs/requirements.txt'
 
+      output-directory:
+          description: 'The directory to output the built documentation to'
+          required: false
+          type: string
+          default: '${{inputs.docs-directory}}/build/html'
+
 jobs:
 
   build-sphinx-docs:
@@ -43,8 +55,8 @@ jobs:
           name: Extract repo
           uses: actions/checkout@v4
           with:
-            repository: Pierre-siddall/growss
-            ref: ${{ inputs.branch }}
+            repository: ${{ inputs.checkout-repo }}
+            ref: ${{ inputs.checkout-branch }}
 
         - id: setup_environment
           name: Setup Python environment
@@ -92,6 +104,6 @@ jobs:
           uses: actions/upload-pages-artifact@v3
           with:
              name: github-pages
-             path: ${{ inputs.docs-directory }}/build/html
+             path: ${{inputs.output-directory}}
              retention-days: 1
 
