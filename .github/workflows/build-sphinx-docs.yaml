@@ -57,6 +57,7 @@ jobs:
           with:
             repository: ${{ inputs.checkout-repo }}
             ref: ${{ inputs.checkout-branch }}
+            token: ${{ secrets.GITHUB_TOKEN }}
 
         - id: setup_environment
           name: Setup Python environment
