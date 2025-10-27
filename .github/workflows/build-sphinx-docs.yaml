@@ -12,6 +12,13 @@ on:
     inputs:
       # The inputs are the parameters that can be passed
       # to this resuable workflow by the calling workflow.
+
+      branch:
+          description: 'The branch to checkout the repository from'
+          required: false
+          type: string
+          default: 'fix-build-sphinx-docs'
+
       docs-directory:
           description: 'Directory containing the documentation to build'
           required: false
@@ -36,7 +43,8 @@ jobs:
           name: Extract repo
           uses: actions/checkout@v4
           with:
-            ref: fix-build-sphinx-docs
+            repository: Pierre-siddall/growss
+            ref: ${{ inputs.branch }}
 
         - id: setup_environment
           name: Setup Python environment
