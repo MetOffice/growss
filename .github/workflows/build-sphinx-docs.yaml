@@ -54,6 +54,9 @@ jobs:
             restore-keys: |
               ${{ runner.os }}-pip-
 
+        - name: List requirements file
+          run: ls -l .github/dependencies/build-sphinx-docs/
+
         # The installation of dependencies is then done by
         # upgrading pip and installing the packages from
         # the requirements file.
