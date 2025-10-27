@@ -23,7 +23,7 @@ on:
           description: 'The branch to checkout the repository from'
           required: false
           type: string
-          default: 'main
+          default: 'main'
 
       docs-directory:
           description: 'Directory containing the documentation to build'
