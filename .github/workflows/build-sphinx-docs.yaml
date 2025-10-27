@@ -35,6 +35,8 @@ jobs:
         - id: extract
           name: Extract repo
           uses: actions/checkout@v4
+          with:
+            ref: ${{github.ref}}
 
         - id: setup_environment
           name: Setup Python environment
