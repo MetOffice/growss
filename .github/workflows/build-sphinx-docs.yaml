@@ -16,9 +16,9 @@ on:
         default: './documentation'
       requirements:
         description: 'Path to the requirements file to install dependencies from'
-        required: false
+        required: true
         type: string
-        default: 'build-sphinx-docs/requirements.txt'
+        default: 'requirements.txt'
       sphinx-opts:
         description: 'Additional options to pass to the Sphinx build command'
         required: false
@@ -42,7 +42,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-        
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
