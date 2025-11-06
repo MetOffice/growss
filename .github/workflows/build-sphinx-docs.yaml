@@ -42,16 +42,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-
-      - name: Checkout growss
-        if: ${{ inputs.requirements == '' || inputs.requirements == null }}
-        uses: actions/checkout@v5
-        with:
-          repository: MetOffice/growss
-          sparse-checkout: ${{ env.REQS_FILE }}
-          # get a precise list of files to fetch, instead of broad patterns
-          sparse-checkout-cone-mode: false
-
+        
       - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
