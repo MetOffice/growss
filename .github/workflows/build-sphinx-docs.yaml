@@ -29,11 +29,21 @@ on:
         required: false
         type: string
         default: '${{inputs.docs-directory}}/build'
+      runner:
+        description: 'The runner to use for the job'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      timeout:
+        description: 'Timeout for the job in minutes'
+        required: false
+        type: number
+        default: 5
 
 jobs:
   build-sphinx-docs:
     name: Build Sphinx Docs
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner }}
     env:
       DOCS_DIR: ${{ inputs.docs-directory }}
       REQS_FILE: ${{ inputs.requirements }}
