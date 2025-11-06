@@ -18,7 +18,7 @@ steps:
       build-directory: Directory to output the html documentation to
 ```
 
-### Default requirements
+### Example requirements
 
 ```text
     sphinx==8.2.3
@@ -28,4 +28,39 @@ steps:
     sphinx-lint==1.0.0
     sphinx-sitemap==2.8.0
     sphinxcontrib-svg2pdfconverter==1.3.0
+```
+
+### Example deployment workflow
+```yaml
+
+name: Deploy Sphinx Docs
+
+on:
+  workflow_call:
+
+jobs:
+
+  deploy-sphinx-docs:
+
+     name: deploy sphinx docs to github pages
+     # Defines the deployment target as GitHub Pages
+     environment:
+       name: github-pages
+
+     permissions:
+        pages: write
+        id-token: write
+
+     runs-on: ubuntu-24.04
+     needs: build-sphinx-html
+     steps:
+        # Configuration and deployment to GitHub Pages
+        - name: Configure GitHub Pages
+          id: Configure
+          uses: actions/configure-pages@v4
+
+        - name: Deploy to GitHub Pages
+          id: Deploy
+          uses: actions/deploy-pages@v4
+          
 ```
