@@ -1,0 +1,32 @@
+---
+name: umdp3 fixer reusable
+
+on:
+    workflow_call:
+
+permissions: read-all
+
+jobs:
+    umdp3_fixer:
+        runs-on: ubuntu-24.04
+        timeout-minutes: 10
+
+        steps:
+            - name: Checkout Branch
+              uses: actions/checkout@v4
+              with:
+                path: cloned_branch
+            - name: Checkout SimSys_Scripts
+              uses: actions/checkout@v4
+              with:
+                repository: MetOffice/SimSys_Scripts
+                sparse-checkout: umdp3_fixer
+                path: SimSys_Scripts
+            - name: Set up Python 3.14
+              uses: actions/setup-python@v5
+              with:
+                python-version: 3.14
+            - name: Run UMDP3 Fixer
+              run: |
+                cd "$GITHUB_WORKSPACE/SimSys_Scripts/umdp3_fixer"
+                python rosestem_branch_checker.py --source "$GITHUB_WORKSPACE/cloned_branch" --fixer_source . --col 80
