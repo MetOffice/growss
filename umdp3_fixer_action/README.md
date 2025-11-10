@@ -17,7 +17,7 @@ jobs:
     umdp3_fixer:
         uses: MetOffice/growss/.github/workflows/umdp3_fixer.yaml@main
         secrets:
-            github_token: ${{ secrets.GITHUB_TOKEN }}
+            gh_action_token: ${{ secrets.GITHUB_TOKEN }}
 
         with:
             # Optional
