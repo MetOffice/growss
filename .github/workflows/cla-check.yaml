@@ -2,11 +2,11 @@ name: CLA
 on:
   workflow_call:
     inputs:
-        runner:
-            description: 'The runner to use for the job'
-            required: false
-            type: string
-            default: 'ubuntu-24.04'
+      runner:
+        description: 'The runner to use for the job'
+        required: false
+        type: string
+        default: 'ubuntu-24.04'
 
 permissions:
   contents: read
