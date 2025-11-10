@@ -17,7 +17,8 @@ jobs:
     cla_check:
         uses: MetOffice/growss/.github/workflows/cla-check.yaml@main
 
-        # Optional
         with:
+            token: {{ secrets.GITHUB_TOKEN }}
+            # Optional
             runner: 'ubuntu-24.04'
 ```
