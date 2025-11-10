@@ -1,0 +1,42 @@
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Sphinx
+documentation/build
+
+# uv
+.venv
+
+# Jetbrains
+.idea
+
+# vscode
+.vscode
+
+# Emacs backup files
+.#*
+\#*#
+
+# Python
+*.py[cod]
+*.pyo
+__pycache__
+.pytest_cache
+*.coverage
