@@ -78,7 +78,7 @@ jobs:
         # success/failure to manage labels correctly
         if: always()
         with:
-          github-token: ${{ inputs.token }}
+          github-token: ${{ secrets.github_token }}
           script: |
             const signedOnBase = '${{ steps.check_contributor_base.outputs.on_base }}' === 'true';
             // Default signed status is false if the second check wasn't run
