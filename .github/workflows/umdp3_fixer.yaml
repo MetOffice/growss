@@ -9,19 +9,28 @@ on:
             required: false
             type: string
             default: 'ubuntu-24.04'
+        timeout:
+            description: 'The time limit for the workflow, default 10 minutes'
+            required: false
+            type: number
+            default: 10
+    secrets:
+        github_token:
+            required: true
 
 permissions: read-all
 
 jobs:
     umdp3_fixer:
         runs-on: ${{ inputs.runner }}
-        timeout-minutes: 10
+        timeout-minutes: ${{ inputs.timeout }}
 
         steps:
             - name: Checkout Branch
               uses: actions/checkout@v4
               with:
                 path: cloned_branch
+                token: ${{ secrets.github_token }}
             - name: Checkout SimSys_Scripts
               uses: actions/checkout@v4
               with:
