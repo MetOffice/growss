@@ -8,7 +8,7 @@ on:
         type: string
         default: 'ubuntu-24.04'
     secrets:
-      github_token:
+      gh_action_token:
         required: true
 
 permissions:
@@ -23,7 +23,7 @@ jobs:
       - name: Checkout base branch and check for contributor status
         uses: actions/checkout@v5
         with:
-          token: ${{ secrets.github_token }}
+          token: ${{ secrets.gh_action_token }}
           ref: ${{ github.event.pull_request.base.sha }}
 
       - name: Determine if contributor exists in base
@@ -50,7 +50,7 @@ jobs:
         if: steps.check_contributor_base.outputs.on_base != 'true'
         uses: actions/checkout@v5
         with:
-          token: ${{ secrets.github_token }}
+          token: ${{ secrets.gh_action_token }}
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Determine if contributor exists in PR branch
@@ -74,7 +74,7 @@ jobs:
         # success/failure to manage labels correctly
         if: always()
         with:
-          github-token: ${{ secrets.github_token }}
+          github-token: ${{ secrets.gh_action_token }}
           script: |
             const signedOnBase = '${{ steps.check_contributor_base.outputs.on_base }}' === 'true';
             // Default signed status is false if the second check wasn't run
