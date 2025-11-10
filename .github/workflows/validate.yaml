@@ -45,7 +45,7 @@ jobs:
         run: uv run ruff format --check --diff -s --respect-gitignore .
 
       - name: Shell Check
-        continue-on-error: true
+        if: always()
         shell: bash
         run: |
           find . -type f \( -name "*.*sh" -o ! -name "*.*" \) \
