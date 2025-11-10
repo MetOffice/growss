@@ -1,6 +1,11 @@
 name: CLA
 on:
   workflow_call:
+    runner:
+      description: 'The runner to use for the job'
+      required: false
+      type: string
+      default: 'ubuntu-24.04'
 
 permissions:
   contents: read
@@ -8,7 +13,7 @@ permissions:
 
 jobs:
   check-cla:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner }}
     steps:
       # --- Step 1: Check Base Branch ---
       - name: Checkout base branch and check for contributor status
