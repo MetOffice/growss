@@ -54,7 +54,7 @@ jobs:
         if: steps.check_contributor_base.outputs.on_base != 'true'
         uses: actions/checkout@v5
         with:
-          token: ${{ inputs.token }}
+          token: ${{ secrets.github_token }}
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Determine if contributor exists in PR branch
