@@ -7,13 +7,9 @@ on:
         required: false
         type: string
         default: 'ubuntu-24.04'
-      token:
-        description: 'A github token to give write permissions to calling PR'
-        required: false
-        type: string
     secrets:
       github_token:
-        required: true        
+        required: true
 
 permissions:
   contents: read
