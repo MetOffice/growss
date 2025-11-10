@@ -30,6 +30,9 @@ package. Although, it is advised that version numbers are used in the
 automatic updates to packages breaking the workflow due to versions of different
 packages being incompatible with each other.
 
+In order to call this workflow in your repositories you would need to implement the
+following file in your .github/workflows folder:
+
 ### Build Sphinx Documentation
 
 ```yaml
@@ -46,6 +49,14 @@ steps:
       timeout: Timeout for the job in minutes (5)
 ```
 
+Here the user would implement this file and replace each of the parameters with
+the respective data types as dictated by the  inputs section of the
+`build-sphinx-docs.yaml` file.
+
+Once the developer has implemeted this in an external gitub repository they may choose
+to further implement the deployment of the documentation build by implementing the
+deployment action and passing it the respective parameters defined in `deploy-sphinx-docs.yaml` as follows:
+
 ### Deploy built HTML to GitHub Pages
 
 ```yaml
@@ -58,7 +69,10 @@ steps:
       timeout: Timeout for the job in minutes (5)
 ```
 
-### Example caller workflow in an external repository
+Both of these steps can then be combined to produce a simple build and deploy docuementation
+pipeline for your external repository as follows:
+
+### Example continuous intergration pipeline in an external repository
 
 An example workflow to build Sphinx documentation and deploy it to GitHub Pages
 when changes are pushed to the `main` branch:
