@@ -27,7 +27,7 @@ jobs:
       - name: Checkout base branch and check for contributor status
         uses: actions/checkout@v5
         with:
-          token: ${{ inputs.token }}
+          token: ${{ secrets.github_token }}
           ref: ${{ github.event.pull_request.base.sha }}
 
       - name: Determine if contributor exists in base
