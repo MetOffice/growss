@@ -3,10 +3,6 @@
 *.dylib
 *.dll
 
-# Fortran module files
-*.mod
-*.smod
-
 # Compiled Static libraries
 *.lai
 *.la
@@ -18,11 +14,9 @@
 *.out
 *.app
 
-# Sphinx
-documentation/build
-
 # uv
 .venv
+uv.lock
 
 # Jetbrains
 .idea
@@ -30,9 +24,10 @@ documentation/build
 # vscode
 .vscode
 
-# Emacs backup files
+# Backup files
 .#*
 \#*#
+*~
 
 # Python
 *.py[cod]

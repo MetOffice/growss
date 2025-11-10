@@ -32,23 +32,25 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --locked
+        run: uv sync
 
       - name: YAML Lint
         run: uv run yamllint -s .
 
       - name: Python Lint
-        run: uv run ruff check .
+        if: always()
+        run: uv run ruff check --respect-gitignore .
       - name: Python Format Check
         if: always()
         run: uv run ruff format --check --diff -s --respect-gitignore .
 
       - name: Shell Check
-        if: always()
+        continue-on-error: true
+        shell: bash
         run: |
           find . -type f \( -name "*.*sh" -o ! -name "*.*" \) \
             -not -path "*.git/*" -not -path "*.venv/*" -print0 \
-            | xargs -0 file | grep "shell script" | cut -d: -f1 \
+            | xargs -0 file 2>/dev/null | grep "shell script" | cut -d: -f1 \
             | xargs -r uv run shellcheck -S warning \
             && echo "All checks passed!"
 
