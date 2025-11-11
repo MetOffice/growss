@@ -1,5 +1,5 @@
 ---
-name: umdp3 fixer reusable
+name: Fix UMDP3
 
 on:
   workflow_call:
