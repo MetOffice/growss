@@ -14,8 +14,7 @@ on:
 jobs:
     cla_check:
         uses: MetOffice/growss/.github/workflows/cla-check.yaml@main
-        secrets:
-            gh_action_token: ${{ secrets.GITHUB_TOKEN }}
+
         # Optional
         with:
             runner: 'ubuntu-24.04'
