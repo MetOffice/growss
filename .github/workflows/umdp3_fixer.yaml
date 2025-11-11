@@ -42,6 +42,6 @@ jobs:
               with:
                 python-version: 3.14
             - name: Run UMDP3 Fixer
-              run: |
-                cd "$GITHUB_WORKSPACE/SimSys_Scripts/umdp3_fixer"
-                python rosestem_branch_checker.py --source "$GITHUB_WORKSPACE/cloned_branch" --fixer_source . --col 80
+              working-directory: ./SimSys_Scripts/umdp3_fixer
+              run: |                
+                python rosestem_branch_checker.py --source "${GITHUB_WORKSPACE}/pr_branch" --fixer_source . --col 80
