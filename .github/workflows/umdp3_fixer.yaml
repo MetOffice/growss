@@ -14,9 +14,6 @@ on:
             required: false
             type: number
             default: 10
-    secrets:
-        gh_action_token:
-            required: true
 
 permissions: read-all
 
@@ -30,7 +27,7 @@ jobs:
               uses: actions/checkout@v4
               with:
                 path: pr_branch
-                token: ${{ secrets.gh_action_token }}
+                token: ${{ secrets.GITHUB_TOKEN }}
             - name: Checkout SimSys_Scripts
               uses: actions/checkout@v4
               with:
@@ -43,5 +40,5 @@ jobs:
                 python-version: 3.14
             - name: Run UMDP3 Fixer
               working-directory: ./SimSys_Scripts/umdp3_fixer
-              run: |                
+              run: |
                 python rosestem_branch_checker.py --source "${GITHUB_WORKSPACE}/pr_branch" --fixer_source . --col 80
