@@ -62,4 +62,3 @@ jobs:
             | xargs -r uv run shellcheck -S warning \
             && echo "All checks passed!"
         continue-on-error: true
-
