@@ -30,6 +30,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python-version }}
+          cache-key: dependencies-${{ runner.os }}-${{ matrix.python-version }}
 
       - name: Install dependencies
         run: uv sync
@@ -56,13 +57,9 @@ jobs:
             echo "No shell scripts to check."
             exit 0
           fi
-          find . -type f \( -name "*.*sh" -o ! -name "*.*" \) \
-            -not -path "*.git/*" -not -path "*.venv/*" -print0 \
+          printf "%s\0" "${potential_files[@]}" \
             | xargs -0 file | grep "shell script" | cut -d: -f1 \
             | xargs -r uv run shellcheck -S warning \
             && echo "All checks passed!"
         continue-on-error: true
 
-      - name: Minimize uv cache
-        run: uv cache prune --ci
-        continue-on-error: true
