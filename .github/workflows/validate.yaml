@@ -65,3 +65,4 @@ jobs:
 
       - name: Minimize uv cache
         run: uv cache prune --ci
+        continue-on-error: true
