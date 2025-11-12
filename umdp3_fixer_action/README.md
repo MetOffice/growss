@@ -16,11 +16,9 @@ on:
 jobs:
     umdp3_fixer:
         uses: MetOffice/growss/.github/workflows/umdp3_fixer.yaml@main
-        secrets:
-            gh_action_token: ${{ secrets.GITHUB_TOKEN }}
 
+        # Optional
         with:
-            # Optional
             runner: 'ubuntu-24.04'
             timeout: 10
 ```
