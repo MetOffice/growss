@@ -25,10 +25,9 @@ sphinxcontrib-svg2pdfconverter==1.3.0
 In this example file both the package name and version numbers of these packages
 have been specified. This workflow would still run if only the package names
 were specified and would by default install the most recent version of each
-package. Although, it is advised that version numbers are used in the
+package. However, it is recommended that version numbers are used in the
 `requirements.txt` file to ensure consistency across builds and to avoid
-automatic updates to packages breaking the workflow due to versions of different
-packages being incompatible with each other.
+automatic updates to packages breaking the workflow.
 
 In order to call this workflow in your repositories you would need to implement the
 following file in your .github/workflows folder:
