@@ -53,9 +53,9 @@ Here the user would implement this file and replace each of the parameters with
 the respective data types as dictated by the inputs section of the
 `build-sphinx-docs.yaml` file.
 
-Once the developer has implemeted this in an external gitub repository they may choose
-to further implement the deployment of the documentation build by implementing the
-deployment action and passing it the respective parameters defined in `deploy-sphinx-docs.yaml` as follows:
+Following the calling of the `build-sphinx-docs` workflow, the `deploy-sphinx-docs`
+workflow can be used to deploy the generated html documentation to the GitHub
+webserver. This workflow can be called from a workflow using the form describe below:
 
 ### Deploy built HTML to GitHub Pages
 
