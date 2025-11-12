@@ -30,8 +30,8 @@ package. However, it is recommended that version numbers are used in the
 `requirements.txt` file to ensure consistency across builds and to avoid
 automatic updates to packages breaking the workflow.
 
-In order to call this workflow in your repositories you would need to implement the
-following file in your .github/workflows folder:
+To call this reusable workflow from a project repository a local workflow stored
+in the `.github/workflows` directory of the form described below is required:
 
 ### Build Sphinx Documentation
 
