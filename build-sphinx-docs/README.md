@@ -5,9 +5,10 @@ documentation from a local repository to GitHub Pages.
 
 ## Usage
 
-To use this workflow developers must have a `requirements.txt` file in the top
-level of their project repository to outline the sphinx dependencies that will
-be used by the `build-sphinx-docs` workflow. An example of a `requirements.txt`
+To use this workflow developers must have a `requirements.txt` file to define 
+the sphinx dependencies that will be used by the `build-sphinx-docs` workflow. 
+By default the workflow will look for a `requirements.txt` file in the top 
+level of the calling project repository. An example of a `requirements.txt`
 file which could run this workflow would be as follows:
 
 ### Example requirements
