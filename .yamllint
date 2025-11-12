@@ -1,0 +1,11 @@
+---
+extends: default
+
+ignore: |
+  .venv/
+  .svn/
+
+rules:
+  document-start: disable
+  line-length: disable
+  truthy: disable

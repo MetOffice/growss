@@ -1,0 +1,134 @@
+name: CLA
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'The runner to use for the job'
+        required: false
+        type: string
+        default: 'ubuntu-24.04'
+
+permissions:
+  contents: read
+  pull-requests: write  # Required to add labels and comments
+
+jobs:
+  check-cla:
+    runs-on: ${{ inputs.runner }}
+    steps:
+      # --- Step 1: Check Base Branch ---
+      - name: Checkout base branch and check for contributor status
+        uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: Determine if contributor exists in base
+        id: check_contributor_base
+        run: |
+          AUTHOR="${{ github.event.pull_request.user.login }}"
+          if [ -f "CONTRIBUTORS" ]; then
+            if grep -q "^$AUTHOR" CONTRIBUTORS; then
+              echo "on_base=true" >> $GITHUB_OUTPUT
+              echo "🎉 $AUTHOR has already signed the CLA on base branch."
+            else
+              echo "on_base=false" >> $GITHUB_OUTPUT
+              echo "⚠️ $AUTHOR not on base. Proceeding to check PR branch."
+            fi
+          else
+            # If CONTRIBUTORS file doesn't exist, we must check PR branch
+            echo "on_base=undefined" >> $GITHUB_OUTPUT
+            echo "🔴 CONTRIBUTORS file does not exist on base. Proceeding to check PR branch."
+          fi
+
+      # --- Step 2: Check PR Branch ---
+      - name: Checkout PR branch and check for contributor status
+        # Only run if contributor wasn't found on the base branch
+        if: steps.check_contributor_base.outputs.on_base != 'true'
+        uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Determine if contributor exists in PR branch
+        id: check_contributor_pr
+        # Only run if contributor wasn't found on the base branch
+        if: steps.check_contributor_base.outputs.on_base != 'true'
+        run: |
+          AUTHOR="${{ github.event.pull_request.user.login }}"
+          if grep -q "^$AUTHOR" CONTRIBUTORS; then
+            echo "signed=true" >> $GITHUB_OUTPUT
+            echo "✅ $AUTHOR has updated their CLA signature in CONTRIBUTORS file."
+          else
+            echo "signed=false" >> $GITHUB_OUTPUT
+            echo "❌ $AUTHOR has not signed the CLA."
+          fi
+
+      # --- Step 3: Manage PR Labels, Comments, and Final Status (Consolidated) ---
+      - name: Manage CLA Status, Labels, and Comments
+        uses: actions/github-script@v8
+        # Using 'always()' here so this step runs regardless of previous
+        # success/failure to manage labels correctly
+        if: always()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const signedOnBase = '${{ steps.check_contributor_base.outputs.on_base }}' === 'true';
+            // Default signed status is false if the second check wasn't run
+            const signedOnPr = '${{ steps.check_contributor_pr.outputs.signed }}' === 'true';
+            const cla_met = signedOnBase || signedOnPr;
+            const issue_number = context.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const author = context.payload.pull_request.user.login;
+
+            // Helper function to create or update a label with a specific color
+            async function ensureLabel(name, color, description) {
+              try {
+                await github.rest.issues.updateLabel({ owner, repo, name, color, description });
+                console.log(`Updated label: ${name} with color ${color}`);
+              } catch (error) {
+                // If update fails (label doesn't exist), create it
+                await github.rest.issues.createLabel({ owner, repo, name, color, description });
+                console.log(`Created new label: ${name} with color ${color}`);
+              }
+            }
+
+            // Define desired colors and descriptions for consistency
+            const COLOR_SIGNED = '0052cc'; // Blue
+            const COLOR_REQUIRED = 'b60205'; // Red
+
+            console.log(`CLA Met: ${cla_met} (Base: ${signedOnBase}, PR: ${signedOnPr})`);
+
+            if (cla_met) {
+              await ensureLabel('cla-signed', COLOR_SIGNED, 'This contributor has signed the CLA.');
+              console.log('✅ CLA condition met. Removing required label and adding signed label.');
+              // Use Promise.allSettled for robust label management
+              await Promise.allSettled([
+                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-required' }),
+              ]);
+              if ( signedOnBase === false ) {
+                await Promise.allSettled([
+                    github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['cla-signed'] })
+                ]);
+              }
+
+            } else {
+              await ensureLabel('cla-required', COLOR_REQUIRED, 'CLA signature is required for this PR.');
+              console.log('❌ CLA condition NOT met. Adding required label and ensuring signed label is absent.');
+
+              // Ensure labels are correct
+              await Promise.allSettled([
+                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-signed' }),
+                github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['cla-required'] })
+              ]);
+
+              // Post CLA comment
+              const commentBody = `Hello @${author}! 👋\n\nThank you for your contribution. Since this is your first time contributing to this repository, we ask that you sign our Contributor Licence Agreement (CLA).\n\n📄 [You can read the CLA here](https://github.com/MetOffice/simulation-systems/blob/github_wps/Momentum-CLA.md).\n\nTo agree to the CLA, please add your details (**GitHub username**, real name, organisation, email, and date) to the _CONTRIBUTORS_ file (create one, if required) in the development branch for this PR. After signing the CLA, you won't need to do this again for future PRs.`;
+
+              await github.rest.issues.createComment({ owner, repo, issue_number, body: commentBody });
+
+              // Fail the GitHub Action run
+              console.error("⚠️ Please add yourself to the CONTRIBUTORS file to sign the CLA.");
+              process.exit(1);
+            }

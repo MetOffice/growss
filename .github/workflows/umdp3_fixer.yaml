@@ -1,0 +1,44 @@
+---
+name: Fix UMDP3
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'The runner to use for the job'
+        required: false
+        type: string
+        default: 'ubuntu-24.04'
+      timeout:
+        description: 'The time limit for the workflow, default 10 minutes'
+        required: false
+        type: number
+        default: 10
+
+permissions: read-all
+
+jobs:
+  umdp3_fixer:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout }}
+
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v4
+        with:
+          path: pr_branch
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout SimSys_Scripts
+        uses: actions/checkout@v4
+        with:
+          repository: MetOffice/SimSys_Scripts
+          sparse-checkout: umdp3_fixer
+          path: SimSys_Scripts
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.14
+      - name: Run UMDP3 Fixer
+        working-directory: ./SimSys_Scripts/umdp3_fixer
+        run: |
+          python rosestem_branch_checker.py --source "${GITHUB_WORKSPACE}/pr_branch" --fixer_source . --col 80

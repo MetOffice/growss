@@ -1,0 +1,37 @@
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# uv
+.venv
+uv.lock
+
+# Jetbrains
+.idea
+
+# vscode
+.vscode
+
+# Backup files
+.#*
+\#*#
+*~
+
+# Python
+*.py[cod]
+*.pyo
+__pycache__
+.pytest_cache
+*.coverage
