@@ -101,7 +101,7 @@ jobs:
     needs: build-docs
     name: Deploy GitHub pages
     uses: MetOffice/growss/.github/workflows/deploy-sphinx-docs.yaml@main
-    # with:
-    #   runner: ubuntu-24.04
-    #   timeout: 5
+    with:
+      runner: ubuntu-24.04
+      timeout: 5
 ```
