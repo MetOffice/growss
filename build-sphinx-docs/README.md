@@ -69,8 +69,8 @@ steps:
       timeout: Timeout for the job in minutes (5)
 ```
 
-Both of these steps can then be combined to produce a simple build and deploy docuementation
-pipeline for your external repository as follows:
+Both of these steps can be combined to produce a simple build and deploy documentation
+pipeline for a repository:
 
 ### Example continuous intergration pipeline in an external repository
 
