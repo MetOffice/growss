@@ -50,7 +50,7 @@ steps:
 ```
 
 Here the user would implement this file and replace each of the parameters with
-the respective data types as dictated by the  inputs section of the
+the respective data types as dictated by the inputs section of the
 `build-sphinx-docs.yaml` file.
 
 Once the developer has implemeted this in an external gitub repository they may choose
