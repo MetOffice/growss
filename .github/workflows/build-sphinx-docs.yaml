@@ -82,8 +82,6 @@ jobs:
         run: |
           make html SPHINXOPTS="$SPHINX_OPTS" BUILDDIR="$BUILD_DIR"
 
-      - name: Set permissions for GitHub Pages
-        run: chmod -c -R +rX "$BUILD_DIR/html"
 
       - name: Upload artifact to GitHub Pages
         if: ${{ (github.event_name == 'push' || github.event_name == 'merge_group') && github.ref_name == 'main'}}
