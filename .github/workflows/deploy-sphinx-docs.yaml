@@ -1,0 +1,37 @@
+# ------------------------------------------------------------------------------
+#  (c) Crown copyright Met Office. All rights reserved.
+#  The file LICENCE, distributed with this code, contains details of the terms
+#  under which the code may be used.
+# ------------------------------------------------------------------------------
+
+name: Deploy Sphinx Docs
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'The runner to use for the job'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      timeout:
+        description: 'Timeout for the job in minutes'
+        required: false
+        type: number
+        default: 5
+jobs:
+  deploy-sphinx-docs:
+    runs-on: ${{ inputs.runner }}
+    environment:
+      name: github-pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Configure GitHub Pages
+        id: configure
+        uses: actions/configure-pages@v5
+      - name: Deploy GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
