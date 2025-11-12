@@ -17,8 +17,8 @@ jobs:
     umdp3_fixer:
         uses: MetOffice/growss/.github/workflows/umdp3_fixer.yaml@main
 
-        # Optional
+        # Optional non default inputs
         with:
-            runner: 'ubuntu-24.04'
-            timeout: 10
+            runner: 'ubuntu-latest'
+            timeout: 15
 ```
