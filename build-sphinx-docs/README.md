@@ -90,11 +90,11 @@ jobs:
     uses: MetOffice/growss/.github/workflows/build-sphinx-docs.yaml@main
     with:
       requirements: /path/to/requirements.txt
-      # runner: ubuntu-24.04
-      # timeout: 10
-      # docs-directory: '/path/to/documentation'
-      # sphinx-opts: 'extra options'
-      # build-directory: '/path/to/build/html'
+      runner: ubuntu-24.04
+      timeout: 10
+      docs-directory: '/path/to/documentation'
+      sphinx-opts: 'extra options'
+      build-directory: '/path/to/build/html'
 
   deploy-docs:
     if: github.ref == 'refs/heads/main'
