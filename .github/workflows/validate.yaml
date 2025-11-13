@@ -38,7 +38,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --frozen
 
       - name: YAML Lint
         if: matrix.check == 'yaml-lint'
