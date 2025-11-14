@@ -13,6 +13,7 @@ reusable workflow from a caller workflow. The following toml file is an example 
 what your `fortitude.toml` file could look like:
 
 ### Example fortitude configuration
+
 ```toml
 [check]
 select = ["S", "T"]
