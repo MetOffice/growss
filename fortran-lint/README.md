@@ -38,4 +38,4 @@ steps:
 ```
 
 Where runner,timeout and python-version are all appropriately defined inputs
-to the workflow as defined in `MetOffice/growss/.github/workflows/fortan-lint.yaml` 
+to the workflow as defined in `MetOffice/growss/.github/workflows/fortan-lint.yaml`
