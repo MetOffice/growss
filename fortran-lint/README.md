@@ -19,6 +19,8 @@ select = ["S", "T"]
 ignore = ["S001", "S051"]
 line-length = 132
 ```
+In order to use this reusable workflow you should implement a calling workflow as
+a YAML file in your `.github/workflows` directory containing the follwing:
 
 ### Example usage in caller workflow
 ```yaml
@@ -31,3 +33,6 @@ steps:
        timeout: The maximum time in minutes the job can run for (10)
        python-version: The Python version to use (3.14)
 ```
+
+Where runner,timeout and python-version are all appropriately defined inputs
+to the workflow as defined in `MetOffice/growss/.github/workflows/fortan-lint.yaml` 
