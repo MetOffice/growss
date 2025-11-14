@@ -20,6 +20,7 @@ select = ["S", "T"]
 ignore = ["S001", "S051"]
 line-length = 132
 ```
+
 In order to use this reusable workflow you should implement a calling workflow as
 a YAML file in your `.github/workflows` directory containing the follwing:
 
