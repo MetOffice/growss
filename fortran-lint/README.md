@@ -1,7 +1,7 @@
 # GitHub Reusable Workflow to lint fortran using fortitude
 
 This reusable workflow serves as a a generic workflow to lint fortran
-code using the fotitude linter.
+code using the fortitude linter.
 
 ## Usage
 
