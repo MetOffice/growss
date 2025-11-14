@@ -25,6 +25,7 @@ In order to use this reusable workflow you should implement a calling workflow a
 a YAML file in your `.github/workflows` directory containing the follwing:
 
 ### Example usage in caller workflow
+
 ```yaml
 steps:
   - name: Lint Fortran
