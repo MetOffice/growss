@@ -48,7 +48,7 @@ jobs:
 
       - name: Install Fortitude Linter
         run: |
-          uv self update -q 
+          uv self update -q
           uv install fortitude-lint==0.7.3
 
       - name: Run Fortitude Linter
