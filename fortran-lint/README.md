@@ -39,3 +39,8 @@ steps:
 
 Where runner,timeout and python-version are all appropriately defined inputs
 to the workflow as defined in `MetOffice/growss/.github/workflows/fortan-lint.yaml`
+
+### Further details
+Fortitude is a fortran linter developed and maintained by PlasmaFAIR. For further details on
+how to configure your `fortitude.toml` file and how to interpret error messages given by this
+reusable workflow please refer to the [fortitude doumentation](https://fortitude.readthedocs.io/en/latest/)
