@@ -1,0 +1,48 @@
+---
+name: Check CR Approval
+
+on:
+  workflow_call:
+
+permissions: read-all
+
+jobs:
+  check_approved:
+    # Only run if this is actually a pull request
+    # if: ${{ github.event.issue.pull_request }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+
+    steps:
+      - name: check_reviewers
+        env:
+          body: ${{ github.event.pull_request.body }}
+          repo: ${{ github.repository }}
+          number: ${{ github.event.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          code_reviewer=$(echo $body | grep -oP "Code Reviewer:\s?@\K([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})") || true
+          if [[ ! -n "${code_reviewer// /}" ]]; then
+            echo "No CR has been assinged to this PR.
+            echo "This action may be bypassed by a reviewer if appropriate."
+            exit 1
+          fi
+          echo "CR: $code_reviewer"
+
+          cr_approved=false
+          reviews=$(gh pr view -R $repo $number --json "reviews")
+          for review in $(echo $reviews | jq -c '.reviews | .[]'); do
+            reviewer=$(echo $review | jq -r '.author.login')
+            state=$(echo $review | jq -r '.state')
+            echo "$reviewer has $state"
+            if [ "$reviewer" = "$code_reviewer" ] && [ "$state" = "APPROVED" ]; then
+              cr_approved=true
+              echo "The CR has approved this PR"
+            fi
+          done
+
+          if [[ "$cr_approved" = false ]]; then
+            echo "The listed CR has not yet approved this PR."
+            echo "This action may be bypassed by a reviewer if appropriate."
+            exit 1
+          fi
