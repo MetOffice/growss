@@ -21,6 +21,7 @@ jobs:
           number: ${{ github.event.number }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Find "Code Reviewer: @<gh-username>"
           code_reviewer=$(echo $body | grep -oP "Code Reviewer:\s?@\K([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})") || true
           if [[ ! -n "${code_reviewer// /}" ]]; then
             echo "No CR has been assinged to this PR.
