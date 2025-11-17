@@ -22,6 +22,6 @@ on:
 
 jobs:
     check_cr_approved:
-        uses: MetOffice/growss/.github/workflows/check_cr_approved.yaml@main
+        uses: MetOffice/growss/.github/workflows/check-cr-approved.yaml@main
 
 ```
