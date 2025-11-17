@@ -12,14 +12,17 @@ on:
       runner:
         description: 'The runner to use for the job'
         required: false
+        type: string
         default: 'ubuntu-latest'
       timeout:
         description: 'The maximum time in minutes the job can run for'
         required: false
+        type: number
         default: 10
       python-version:
         description: 'The Python version to use'
         required: false
+        type: string
         default: '3.14'
 
 concurrency:
