@@ -3,7 +3,6 @@ name: Check CR Approval
 on:
   workflow_call:
 
-# Least permissive permissions needed
 permissions: read-all
 
 jobs:
