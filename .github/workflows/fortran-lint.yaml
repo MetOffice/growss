@@ -58,8 +58,7 @@ jobs:
             uv-${{ runner.os }}
 
       - name: Install Fortitude Linter
-        run: |
-          uv pip install fortitude-lint==0.7.3
+        run: uv pip install fortitude-lint==0.7.3
 
       - name: Run Fortitude Linter
         run: fortitude check --respect-gitignore --show-fixes --file-extensions=f90,F90,x90,X90 .
