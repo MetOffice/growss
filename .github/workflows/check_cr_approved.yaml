@@ -1,49 +1,49 @@
----
 name: Check CR Approval
 
 on:
   workflow_call:
 
+# Least permissive permissions needed
 permissions: read-all
 
 jobs:
   check_approved:
-    # Only run if this is actually a pull request
-    # if: ${{ github.event.issue.pull_request }}
     runs-on: ubuntu-24.04
     timeout-minutes: 2
 
     steps:
-      - name: check_reviewers
+      - name: Check for Code Reviewer approval
         env:
-          body: ${{ github.event.pull_request.body }}
-          repo: ${{ github.repository }}
-          number: ${{ github.event.number }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.number }}
+          REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Find "Code Reviewer: @<gh-username>"
-          code_reviewer=$(echo $body | grep -oP "Code Reviewer:\s?@\K([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})") || true
-          if [[ ! -n "${code_reviewer// /}" ]]; then
-            echo "No CR has been assinged to this PR.
-            echo "This action may be bypassed by a reviewer if appropriate."
+          # -- 1. Extract the assigned Code Reviewer from the PR body
+          CODE_REVIEWER=$(echo "$PR_BODY" | grep -oP "Code Reviewer:\s?@\K([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})") || true
+
+          if [[ -z "$CODE_REVIEWER" ]]; then
+            echo "::error::No 'Code Reviewer: @<username>' found in the PR body."
+            echo "::notice::This action may be bypassed by a reviewer with sufficient permissions if appropriate."
             exit 1
           fi
-          echo "CR: $code_reviewer"
+          echo "Expected Code Reviewer: $CODE_REVIEWER"
 
-          cr_approved=false
-          reviews=$(gh pr view -R $repo $number --json "reviews")
-          for review in $(echo $reviews | jq -c '.reviews | .[]'); do
-            reviewer=$(echo $review | jq -r '.author.login')
-            state=$(echo $review | jq -r '.state')
-            echo "$reviewer has $state"
-            if [ "$reviewer" = "$code_reviewer" ] && [ "$state" = "APPROVED" ]; then
-              cr_approved=true
-              echo "The CR has approved this PR"
-            fi
-          done
+          # -- 2. Check the review status
+          CR_APPROVED=$(gh pr view -R "$REPO" "$PR_NUMBER" --json "reviews" |
+            jq -r --arg cr "$CODE_REVIEWER" ' .reviews[] |
+            select((.author.login == $cr) and .state == "APPROVED") |
+            .state')
 
-          if [[ "$cr_approved" = false ]]; then
-            echo "The listed CR has not yet approved this PR."
-            echo "This action may be bypassed by a reviewer if appropriate."
+          if [[ "$CR_APPROVED" == "APPROVED" ]]; then
+            echo "✅ Success: The listed Code Reviewer ($CODE_REVIEWER) has approved this PR."
+          else
+            # Exit with failure if the specific reviewer has not yet approved
+            echo "::error::The listed Code Reviewer ($CODE_REVIEWER) has not yet approved this PR."
+            echo "Current reviews for this user:"
+            gh pr view -R "$REPO" "$PR_NUMBER" --json "reviews" | jq -r --arg cr "$CODE_REVIEWER" '
+              .reviews[] | select(.author.login == $cr) | "- \(.state)"'
+
+            echo "::notice::This action may be bypassed by a reviewer with sufficient permissions if appropriate."
             exit 1
           fi
