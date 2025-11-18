@@ -77,8 +77,7 @@ jobs:
             uv-${{ runner.os }}
 
       - name: Install dependencies
-        run: |
-          uv pip install -r "$REQS_FILE"
+        run: uv pip install -r "$REQS_FILE"
 
       - name: Lint Sphinx docs
         working-directory: ${{ env.DOCS_DIR }}
