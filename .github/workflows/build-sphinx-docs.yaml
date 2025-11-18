@@ -15,10 +15,10 @@ on:
         type: string
         default: '3.14'
       docs-directory:
-        description: 'Directory containing the documentation to build'
+        description: 'Directory containing the documentation source to build'
         required: false
         type: string
-        default: './documentation'
+        default: 'documentation'
       requirements:
         description: 'Path to the requirements file to install dependencies from'
         required: true
@@ -33,7 +33,7 @@ on:
         description: 'Directory to output the html documentation to'
         required: false
         type: string
-        default: '${{inputs.docs-directory}}/build'
+        default: 'build'
       runner:
         description: 'The runner to use for the job'
         required: false
@@ -49,7 +49,7 @@ jobs:
   build-sphinx-docs:
     name: Build Sphinx Docs
     runs-on: ${{ inputs.runner }}
-
+    timeout-minutes: ${{ inputs.timeout }}
     env:
       DOCS_DIR: ${{ inputs.docs-directory }}
       REQS_FILE: ${{ inputs.requirements }}
@@ -79,6 +79,9 @@ jobs:
       - name: Install dependencies
         run: uv pip install -r "$REQS_FILE"
 
+      - name: Minimize pip cache
+        run: python3 -m pip cache remove '*' || true
+
       - name: Lint Sphinx docs
         working-directory: ${{ env.DOCS_DIR }}
         run: sphinx-lint .
@@ -87,7 +90,6 @@ jobs:
         working-directory: ${{ env.DOCS_DIR }}
         run: |
           make html SPHINXOPTS="$SPHINX_OPTS" BUILDDIR="$BUILD_DIR"
-
 
       - name: Upload artifact to GitHub Pages
         if: ${{ (github.event_name == 'push' || github.event_name == 'merge_group') && github.ref_name == 'main'}}
