@@ -7,23 +7,22 @@
 name: Fortran lint
 on:
   workflow_call:
-
     inputs:
       runner:
-        description: 'The runner to use for the job'
+        description: "The runner to use for the job"
         required: false
         type: string
-        default: 'ubuntu-latest'
+        default: "ubuntu-latest"
       timeout:
-        description: 'The maximum time in minutes the job can run for'
+        description: "The maximum time in minutes the job can run for"
         required: false
         type: number
         default: 10
       python-version:
-        description: 'The Python version to use'
+        description: "The Python version to use"
         required: false
         type: string
-        default: '3.14'
+        default: "3.14"
 
 concurrency:
   group: ${{ github.ref }}
@@ -37,6 +36,7 @@ jobs:
 
     env:
       UV_CACHE_DIR: /tmp/.uv_cache
+      UV_PYTHON: ${{ inputs.python-version }}
 
     steps:
       - name: Checkout repository
@@ -45,7 +45,7 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
         with:
-          python-version: ${{ inputs.python-version }}
+          python-version: ${{ env.UV_PYTHON }}
           enable-cache: true
 
       - name: restore uv cache
@@ -58,7 +58,9 @@ jobs:
             uv-${{ runner.os }}
 
       - name: Install Fortitude Linter
-        run: uv pip install --system fortitude-lint==0.7.3
+        run: |
+          uv pip install --python ${{ env.UV_PYTHON }} fortitude-lint==0.7.3
+          type fortitude
 
       - name: Run Fortitude Linter
         run: fortitude check --respect-gitignore --show-fixes --file-extensions=f90,F90,x90,X90 .
