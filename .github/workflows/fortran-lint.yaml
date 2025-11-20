@@ -7,23 +7,22 @@
 name: Fortran lint
 on:
   workflow_call:
-
     inputs:
       runner:
-        description: 'The runner to use for the job'
+        description: "The runner to use for the job"
         required: false
         type: string
-        default: 'ubuntu-latest'
+        default: "ubuntu-latest"
       timeout:
-        description: 'The maximum time in minutes the job can run for'
+        description: "The maximum time in minutes the job can run for"
         required: false
         type: number
         default: 10
       python-version:
-        description: 'The Python version to use'
+        description: "The Python version to use"
         required: false
         type: string
-        default: '3.14'
+        default: "3.14"
 
 concurrency:
   group: ${{ github.ref }}
@@ -72,4 +71,3 @@ jobs:
 
       - name: minimize uv cache
         run: uv cache prune --ci
-
