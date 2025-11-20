@@ -10,37 +10,37 @@ on:
   workflow_call:
     inputs:
       python-version:
-        description: 'The Python version to use'
+        description: "The Python version to use"
         required: false
         type: string
-        default: '3.14'
+        default: "3.14"
       docs-directory:
-        description: 'Directory containing the documentation source to build'
+        description: "Directory containing the documentation source to build"
         required: false
         type: string
-        default: 'documentation'
-      requirements:
-        description: 'Path to the requirements file to install dependencies from'
+        default: "documentation"
+      toml-file:
+        description: "Path to the pyproject file to install dependencies from"
         required: true
         type: string
-        default: 'requirements.txt'
+        default: "pyproject.toml"
       sphinx-opts:
-        description: 'Additional options to pass to the Sphinx build command'
+        description: "Additional options to pass to the Sphinx build command"
         required: false
         type: string
-        default: '-W --keep-going -n'
+        default: "-W --keep-going -n"
       build-directory:
-        description: 'Directory to output the html documentation to'
+        description: "Directory to output the html documentation to"
         required: false
         type: string
-        default: 'build'
+        default: "build"
       runner:
-        description: 'The runner to use for the job'
+        description: "The runner to use for the job"
         required: false
         type: string
-        default: 'ubuntu-latest'
+        default: "ubuntu-latest"
       timeout:
-        description: 'Timeout for the job in minutes'
+        description: "Timeout for the job in minutes"
         required: false
         type: number
         default: 5
@@ -52,7 +52,7 @@ jobs:
     timeout-minutes: ${{ inputs.timeout }}
     env:
       DOCS_DIR: ${{ inputs.docs-directory }}
-      REQS_FILE: ${{ inputs.requirements }}
+      TOML_FILE: ${{ inputs.toml-file }}
       SPHINX_OPTS: ${{ inputs.sphinx-opts }}
       BUILD_DIR: ${{ inputs.build-directory }}
       UV_CACHE_DIR: /tmp/.uv-cache
@@ -76,11 +76,14 @@ jobs:
             uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
             uv-${{ runner.os }}
 
-      - name: Install dependencies
-        run: uv pip install -r "$REQS_FILE"
+      - name: Generate uv environment
+        run: uv init
 
-      - name: Minimize pip cache
-        run: python3 -m pip cache remove '*' || true
+      - name: Install dependencies
+        run: uv sync --project "$TOML_FILE"
+
+      - name: Activate uv environment
+        run: . .venv/bin/activate
 
       - name: Lint Sphinx docs
         working-directory: ${{ env.DOCS_DIR }}
