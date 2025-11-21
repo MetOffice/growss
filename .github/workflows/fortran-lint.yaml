@@ -42,20 +42,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v7
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.UV_PYTHON }}
           enable-cache: true
 
-      - name: restore uv cache
+      - name: Cache pip packages
         uses: actions/cache@v4
         with:
           path: ${{ env.UV_CACHE_DIR }}
           key: ${{ runner.os }}-${{ hashFiles('uv.lock') }}fortitude-0.7.3
           restore-keys: |
-            uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
-            uv-${{ runner.os }}
+            ${{ runner.os }}-pip-
+
+      - name: minimize pip cache
+        run: python -m pip cache purge || true
 
       - name: Generate uv environment
         run: uv init
