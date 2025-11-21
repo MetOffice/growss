@@ -4,7 +4,7 @@
 #  under which the code may be used.
 # ------------------------------------------------------------------------------
 
-name: Optimised Fortran lint
+name: Fortran lint
 on:
   workflow_call:
     inputs:
@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  optimised-fortran-linting:
+  fortran-lint:
     name: Fortran lint
     runs-on: ${{ inputs.runner }}
     timeout-minutes: ${{ inputs.timeout }}
