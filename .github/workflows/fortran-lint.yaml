@@ -4,7 +4,7 @@
 #  under which the code may be used.
 # ------------------------------------------------------------------------------
 
-name: Fortran lint
+name: Optimised Fortran lint
 on:
   workflow_call:
     inputs:
@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  fortitude-linting:
+  optimised-fortran-linting:
     name: Fortran lint
     runs-on: ${{ inputs.runner }}
     timeout-minutes: ${{ inputs.timeout }}
@@ -52,7 +52,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.UV_CACHE_DIR }}
-          key: ${{ runner.os }}-${{ hashFiles('uv.lock') }}-fortitude-0.7.3
+          key: ${{ runner.os }}-${{ hashFiles('uv.lock') }}fortitude-0.7.3
           restore-keys: |
             uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
             uv-${{ runner.os }}
@@ -63,11 +63,8 @@ jobs:
       - name: Install Fortitude Linter
         run: uv add fortitude-lint==0.7.3
 
-      - name: Activate uv environment
-        run: . .venv/bin/activate
-
       - name: Run Fortitude Linter
-        run: fortitude check --respect-gitignore --show-fixes --file-extensions=f90,F90,x90,X90 .
+        run: uv run fortitude check --respect-gitignore --show-fixes --file-extensions=f90,F90,x90,X90 .
 
       - name: minimize uv cache
         run: uv cache prune --ci
