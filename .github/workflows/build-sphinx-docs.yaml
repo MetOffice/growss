@@ -82,17 +82,13 @@ jobs:
       - name: Install dependencies
         run: uv sync --project "$TOML_FILE"
 
-      - name: Activate uv environment
-        run: . .venv/bin/activate
-
       - name: Lint Sphinx docs
         working-directory: ${{ env.DOCS_DIR }}
         run: sphinx-lint .
 
       - name: Build Sphinx HTML docs
         working-directory: ${{ env.DOCS_DIR }}
-        run: |
-          make html SPHINXOPTS="$SPHINX_OPTS" BUILDDIR="$BUILD_DIR"
+        run: uv run make html SPHINXOPTS="$SPHINX_OPTS" BUILDDIR="$BUILD_DIR"
 
       - name: Upload artifact to GitHub Pages
         if: ${{ (github.event_name == 'push' || github.event_name == 'merge_group') && github.ref_name == 'main'}}
