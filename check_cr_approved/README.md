@@ -5,8 +5,8 @@ the pr template) and then checks that that user has approved the PR, failing if
 not.
 This is to prevent sci tech reviewers accidentally merging without the review
 process being finalised.
-The intention is for this to be a failure that reviewers can bypass so that for
-trivial tickets it doesn't need to be fulfilled.
+The intention is for this to be bypassable so it just acts as a reminder and
+removes the green commit button before we're ready for it.
 
 ## Usage
 
