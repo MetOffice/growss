@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  optimised-fortran-linting:
+  fortran-linting:
     name: Fortran lint
     runs-on: ${{ inputs.runner }}
     timeout-minutes: ${{ inputs.timeout }}
