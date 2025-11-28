@@ -45,7 +45,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ env.UV_PYTHON }}
-          enable-cache: true
+          enable-cache: false
 
       - name: restore uv cache
         uses: actions/cache@v4
