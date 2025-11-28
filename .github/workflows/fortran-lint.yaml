@@ -41,7 +41,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Setup uv
+      - name: Setup uv and Python ${{ env.UV_PYTHON }}
         uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ env.UV_PYTHON }}
