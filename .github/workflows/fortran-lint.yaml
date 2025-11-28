@@ -35,7 +35,6 @@ jobs:
     timeout-minutes: ${{ inputs.timeout }}
 
     env:
-      UV_CACHE_DIR: /tmp/.uv_cache
       UV_PYTHON: ${{ inputs.python-version }}
 
     steps:
