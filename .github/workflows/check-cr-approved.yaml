@@ -34,7 +34,7 @@ jobs:
             select((.author.login == $cr) and .state == "APPROVED") |
             .state')
 
-          if [[ "$CR_APPROVED" == "APPROVED" ]]; then
+          if [[ "$CR_APPROVED" == *"APPROVED"* ]]; then
             echo "✅ Success: The listed Code Reviewer ($CODE_REVIEWER) has approved this PR."
           else
             # Exit with failure if the specific reviewer has not yet approved
