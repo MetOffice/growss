@@ -14,7 +14,7 @@ jobs:
       - name: Check for Code Reviewer approval
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
-          PR_NUMBER: ${{ github.event.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: |
