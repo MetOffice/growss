@@ -29,20 +29,18 @@ jobs:
           echo "Expected Code Reviewer: $CODE_REVIEWER"
 
           # -- 2. Check the review status
-          CR_APPROVED=$(gh pr view -R "$REPO" "$PR_NUMBER" --json "reviews" |
-            jq -r --arg cr "$CODE_REVIEWER" ' .reviews[] |
-            select((.author.login == $cr) and .state == "APPROVED") |
-            .state')
+          reviews=$(gh pr view -R "$REPO" "$PR_NUMBER" --json "reviews" | jq -r --arg cr "$CODE_REVIEWER" '
+                    [ .reviews[] | select(.author.login == $cr) ]')
 
-          if [[ "$CR_APPROVED" == *"APPROVED"* ]]; then
+          # Check if any review is APPROVED
+          approved=$(echo "$reviews" | jq -r '[ .[] | select(.state == "APPROVED") ] | length')
+
+          if [[ "$approved" -gt 0 ]]; then
             echo "✅ Success: The listed Code Reviewer ($CODE_REVIEWER) has approved this PR."
           else
-            # Exit with failure if the specific reviewer has not yet approved
             echo "::error::The listed Code Reviewer ($CODE_REVIEWER) has not yet approved this PR."
             echo "Current reviews for this user:"
-            gh pr view -R "$REPO" "$PR_NUMBER" --json "reviews" | jq -r --arg cr "$CODE_REVIEWER" '
-              .reviews[] | select(.author.login == $cr) | "- \(.state)"'
-
+            echo "$reviews" | jq -r '.[] | "- \(.state)"'
             echo "::notice::This action may be bypassed by a reviewer with sufficient permissions if appropriate."
             exit 1
           fi
