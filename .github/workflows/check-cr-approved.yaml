@@ -6,7 +6,7 @@ on:
 permissions: read-all
 
 jobs:
-  check_approved:
+  cr_check:
     runs-on: ubuntu-24.04
     timeout-minutes: 2
 
