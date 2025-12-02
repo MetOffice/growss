@@ -4,7 +4,7 @@
 #  under which the code may be used.
 # ------------------------------------------------------------------------------
 
-name: lint
+name: Lint
 on:
   workflow_call:
     inputs:
