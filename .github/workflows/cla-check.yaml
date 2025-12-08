@@ -7,6 +7,11 @@ on:
         required: false
         type: string
         default: 'ubuntu-24.04'
+      ref:
+        description: 'The git ref (branch, tag, or commit SHA) to check out for CLA verification'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -21,7 +26,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: ${{ inputs.ref != '' && inputs.ref || github.event.pull_request.base.sha }}
 
       - name: Determine if contributor exists in base (new)
         id: check_contributor_base
