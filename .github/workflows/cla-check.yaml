@@ -43,8 +43,7 @@ jobs:
 
       # --- Step 2: Check PR Branch ---
       - name: Checkout PR branch and check for contributor status
-        # Only run if contributor wasn't found on the base branch
-        if: steps.check_contributor_base.outputs.on_base != 'true'
+        # Always check PR branch to detect if contributor removed themselves
         uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -52,16 +51,20 @@ jobs:
 
       - name: Determine if contributor exists in PR branch
         id: check_contributor_pr
-        # Only run if contributor wasn't found on the base branch
-        if: steps.check_contributor_base.outputs.on_base != 'true'
+        # Always check PR branch to detect if contributor removed themselves
         run: |
           AUTHOR="${{ github.event.pull_request.user.login }}"
-          if grep -q "^$AUTHOR" CONTRIBUTORS; then
-            echo "signed=true" >> $GITHUB_OUTPUT
-            echo "✅ $AUTHOR has updated their CLA signature in CONTRIBUTORS file."
+          if [ -f "CONTRIBUTORS" ]; then
+            if grep -q "^$AUTHOR" CONTRIBUTORS; then
+              echo "on_pr=true" >> $GITHUB_OUTPUT
+              echo "✅ $AUTHOR is in the CONTRIBUTORS file on PR branch."
+            else
+              echo "on_pr=false" >> $GITHUB_OUTPUT
+              echo "⚠️ $AUTHOR is not in the CONTRIBUTORS file on PR branch."
+            fi
           else
-            echo "signed=false" >> $GITHUB_OUTPUT
-            echo "❌ $AUTHOR has not signed the CLA."
+            echo "on_pr=undefined" >> $GITHUB_OUTPUT
+            echo "🔴 CONTRIBUTORS file does not exist on PR branch."
           fi
 
       # --- Step 3: Manage PR Labels, Comments, and Final Status (Consolidated) ---
@@ -74,13 +77,15 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const signedOnBase = '${{ steps.check_contributor_base.outputs.on_base }}' === 'true';
-            // Default signed status is false if the second check wasn't run
-            const signedOnPr = '${{ steps.check_contributor_pr.outputs.signed }}' === 'true';
-            const cla_met = signedOnBase || signedOnPr;
+            const signedOnPr = '${{ steps.check_contributor_pr.outputs.on_pr }}' === 'true';
             const issue_number = context.issue.number;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const author = context.payload.pull_request.user.login;
+
+            // Check if contributor was on base but removed themselves from PR
+            const removedFromPr = signedOnBase && !signedOnPr;
+            const cla_met = signedOnBase && signedOnPr;
 
             // Helper function to create or update a label with a specific color
             async function ensureLabel(name, color, description) {
@@ -98,7 +103,28 @@ jobs:
             const COLOR_SIGNED = '0052cc'; // Blue
             const COLOR_REQUIRED = 'b60205'; // Red
 
-            console.log(`CLA Met: ${cla_met} (Base: ${signedOnBase}, PR: ${signedOnPr})`);
+            console.log(`CLA Met: ${cla_met} (Base: ${signedOnBase}, PR: ${signedOnPr}, Removed: ${removedFromPr})`);
+
+            // Handle case where contributor removed themselves from CONTRIBUTORS file
+            if (removedFromPr) {
+              await ensureLabel('cla-required', COLOR_REQUIRED, 'CLA signature is required for this PR.');
+              console.log('⚠️ Contributor was in base branch but removed from PR branch.');
+
+              // Ensure labels are correct
+              await Promise.allSettled([
+                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-signed' }),
+                github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['cla-required'] })
+              ]);
+
+              // Post warning comment
+              const commentBody = `⚠️ Hello @${author}!\n\nYour CLA signature was found on the base branch, but you appear to have removed yourself from the _CONTRIBUTORS_ file in this PR.\n\nPlease ensure your entry remains in the _CONTRIBUTORS_ file. If you have already signed the CLA, you should not remove your details from the file.`;
+
+              await github.rest.issues.createComment({ owner, repo, issue_number, body: commentBody });
+
+              // Fail the GitHub Action run
+              console.error("⚠️ Contributor removed themselves from CONTRIBUTORS file.");
+              process.exit(1);
+            }
 
             if (cla_met) {
               await ensureLabel('cla-signed', COLOR_SIGNED, 'This contributor has signed the CLA.');
@@ -106,12 +132,17 @@ jobs:
               // Use Promise.allSettled for robust label management
               await Promise.allSettled([
                 github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-required' }),
+                github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['cla-signed'] })
               ]);
-              if ( signedOnBase === false ) {
-                await Promise.allSettled([
-                    github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['cla-signed'] })
-                ]);
-              }
+
+            } else if (!signedOnBase && signedOnPr) {
+              // New contributor signing CLA for the first time
+              await ensureLabel('cla-signed', COLOR_SIGNED, 'This contributor has signed the CLA.');
+              console.log('✅ New contributor has signed the CLA in PR branch.');
+              await Promise.allSettled([
+                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-required' }),
+                github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['cla-signed'] })
+              ]);
 
             } else {
               await ensureLabel('cla-required', COLOR_REQUIRED, 'CLA signature is required for this PR.');
