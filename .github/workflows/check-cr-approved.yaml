@@ -18,6 +18,8 @@ jobs:
           REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          echo "Running on PR #$PR_NUMBER in Repository $REPO"
+
           # -- 1. Extract the assigned Code Reviewer from the PR body
           CODE_REVIEWER=$(echo "$PR_BODY" | grep -oP "Code Reviewer:\s?@\K([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})") || true
 
