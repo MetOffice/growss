@@ -117,13 +117,16 @@ jobs:
                   issue_number
                 });
 
-                // Filter comments from the bot that contain CLA-related content
+                // Filter comments from GitHub Actions bot that contain CLA-related content
+                // GitHub Actions bot username is 'github-actions[bot]'
                 const botComments = comments.data.filter(comment =>
-                  comment.user.type === 'Bot' &&
+                  (comment.user.login === 'github-actions[bot]' || comment.user.type === 'Bot') &&
                   (comment.body.includes('CLA') ||
                    comment.body.includes('CONTRIBUTORS') ||
                    comment.body.includes('Contributor Licence Agreement'))
                 );
+
+                console.log(`Found ${botComments.length} old CLA comment(s) to delete`);
 
                 // Delete all old CLA comments
                 for (const comment of botComments) {
@@ -132,12 +135,8 @@ jobs:
                     repo,
                     comment_id: comment.id
                   });
-                  console.log(`Deleted old CLA comment #${comment.id}`);
+                  console.log(`Deleted old CLA comment #${comment.id} from ${comment.user.login}`);
                 }
-              } catch (error) {
-                console.log('Error deleting old comments:', error.message);
-              }
-            }
 
             console.log(`CLA Met: ${cla_met} (Base: ${signedOnBase}, PR: ${signedOnPr}, Removed: ${removedFromPr})`);
 
