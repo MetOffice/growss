@@ -132,6 +132,10 @@ jobs:
                   });
                   console.log(`Deleted old CLA comment #${comment.id} from ${comment.user.login}`);
                 }
+              } catch (error) {
+                console.log('Error deleting old comments:', error.message);
+              }
+            }
 
             console.log(`CLA Met: ${cla_met} (Base: ${signedOnBase}, PR: ${signedOnPr}, Removed: ${removedFromPr})`);
 
