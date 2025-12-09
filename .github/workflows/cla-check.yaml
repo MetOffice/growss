@@ -67,13 +67,18 @@ jobs:
             echo "🔴 CONTRIBUTORS.md file does not exist on PR branch."
           fi
 
-      # --- Check if CONTRIBUTORS.md was modified in this PR ---
+      # -- Check if CONTRIBUTORS.md was modified in this PR
       - name: Check if CONTRIBUTORS.md was modified in PR
         id: check_contributors_modified
         run: |
-          # Get the list of changed files in the PR
+          # Fetch the base branch
           git fetch origin ${{ github.event.pull_request.base.ref }}
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD)
+
+          # Use the base SHA directly for comparison (works with forks)
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          CHANGED_FILES=$(git diff --name-only $BASE_SHA..$HEAD_SHA)
 
           if echo "$CHANGED_FILES" | grep -q "^CONTRIBUTORS.md$"; then
             echo "modified=true" >> $GITHUB_OUTPUT
@@ -83,7 +88,7 @@ jobs:
             echo "ℹ️ CONTRIBUTORS.md file was NOT modified in this PR."
           fi
 
-      # --- Step 3: Manage PR Labels, Comments, and Final Status (Consolidated) ---
+      # -- Step 3: Manage PR Labels, Comments, and Final Status (Consolidated)
       - name: Manage CLA Status, Labels, and Comments
         uses: actions/github-script@v8
         # Using 'always()' here so this step runs regardless of previous
