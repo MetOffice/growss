@@ -124,7 +124,7 @@ jobs:
               ]);
 
               // Post CLA comment
-              const commentBody = `Hello @${author}! 👋\n\nThank you for your contribution. Since this is your first time contributing to this repository, we ask that you sign our Contributor Licence Agreement (CLA).\n\n📄 [You can read the CLA here](https://github.com/MetOffice/Momentum/blob/main/CLA.md).\n\nTo agree to the CLA, please add your details to the CONTRIBUTORS.md file (create one, if required) in the development branch for this PR. After signing the CLA, you won't need to do this again for future PRs.`;
+              const commentBody = `Hello @${author}! 👋\n\nThank you for your contribution. Since this is your first time contributing to this repository, we ask that you sign our Contributor Licence Agreement (CLA).\n\n📄 [You can read the CLA here](https://github.com/MetOffice/Momentum/blob/main/CLA.md).\n\nTo agree to the CLA, please add your details (**GitHub username**, Real Name, Affiliation, and Date) to the _CONTRIBUTORS.md_ file (create one, if required) in the development branch for this PR. After signing the CLA, you won't need to do this again for future PRs.`;
 
               await github.rest.issues.createComment({ owner, repo, issue_number, body: commentBody });
 
