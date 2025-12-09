@@ -28,7 +28,7 @@ jobs:
         run: |
           AUTHOR="${{ github.event.pull_request.user.login }}"
           if [ -f "CONTRIBUTORS.md" ]; then
-            if grep -qE "\|\s*$AUTHOR" CONTRIBUTORS.md; then
+            if grep -qE "\|\s*$AUTHOR\s*\|" CONTRIBUTORS.md; then
               echo "on_base=true" >> $GITHUB_OUTPUT
               echo "🎉 $AUTHOR has already signed the CLA on base branch."
             else
@@ -56,7 +56,7 @@ jobs:
         if: steps.check_contributor_base.outputs.on_base != 'true'
         run: |
           AUTHOR="${{ github.event.pull_request.user.login }}"
-          if grep -q "\|\s*$AUTHOR" CONTRIBUTORS.md; then
+          if grep -q "\|\s*$AUTHOR\s*\|" CONTRIBUTORS.md; then
             echo "signed=true" >> $GITHUB_OUTPUT
             echo "✅ $AUTHOR has updated their CLA signature in CONTRIBUTORS.md file."
           else
