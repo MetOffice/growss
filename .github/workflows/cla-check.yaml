@@ -27,8 +27,8 @@ jobs:
         id: check_contributor_base
         run: |
           AUTHOR="${{ github.event.pull_request.user.login }}"
-          if [ -f "CONTRIBUTORS" ]; then
-            if grep -q "^$AUTHOR" CONTRIBUTORS; then
+          if [ -f "CONTRIBUTORS.md" ]; then
+            if grep -qE "\|\s*$AUTHOR" CONTRIBUTORS.md; then
               echo "on_base=true" >> $GITHUB_OUTPUT
               echo "🎉 $AUTHOR has already signed the CLA on base branch."
             else
@@ -36,9 +36,9 @@ jobs:
               echo "⚠️ $AUTHOR not on base. Proceeding to check PR branch."
             fi
           else
-            # If CONTRIBUTORS file doesn't exist, we must check PR branch
+            # If CONTRIBUTORS.md file doesn't exist, we must check PR branch
             echo "on_base=undefined" >> $GITHUB_OUTPUT
-            echo "🔴 CONTRIBUTORS file does not exist on base. Proceeding to check PR branch."
+            echo "🔴 CONTRIBUTORS.md file does not exist on base. Proceeding to check PR branch."
           fi
 
       # --- Step 2: Check PR Branch ---
@@ -56,9 +56,9 @@ jobs:
         if: steps.check_contributor_base.outputs.on_base != 'true'
         run: |
           AUTHOR="${{ github.event.pull_request.user.login }}"
-          if grep -q "^$AUTHOR" CONTRIBUTORS; then
+          if grep -q "\|\s*$AUTHOR" CONTRIBUTORS.md; then
             echo "signed=true" >> $GITHUB_OUTPUT
-            echo "✅ $AUTHOR has updated their CLA signature in CONTRIBUTORS file."
+            echo "✅ $AUTHOR has updated their CLA signature in CONTRIBUTORS.md file."
           else
             echo "signed=false" >> $GITHUB_OUTPUT
             echo "❌ $AUTHOR has not signed the CLA."
@@ -124,11 +124,11 @@ jobs:
               ]);
 
               // Post CLA comment
-              const commentBody = `Hello @${author}! 👋\n\nThank you for your contribution. Since this is your first time contributing to this repository, we ask that you sign our Contributor Licence Agreement (CLA).\n\n📄 [You can read the CLA here](https://github.com/MetOffice/Momentum/blob/main/CLA.md).\n\nTo agree to the CLA, please add your details to the _CONTRIBUTORS_ file (create one, if required) in the development branch for this PR. After signing the CLA, you won't need to do this again for future PRs.`;
+              const commentBody = `Hello @${author}! 👋\n\nThank you for your contribution. Since this is your first time contributing to this repository, we ask that you sign our Contributor Licence Agreement (CLA).\n\n📄 [You can read the CLA here](https://github.com/MetOffice/Momentum/blob/main/CLA.md).\n\nTo agree to the CLA, please add your details to the CONTRIBUTORS.md file (create one, if required) in the development branch for this PR. After signing the CLA, you won't need to do this again for future PRs.`;
 
               await github.rest.issues.createComment({ owner, repo, issue_number, body: commentBody });
 
               // Fail the GitHub Action run
-              console.error("⚠️ Please add yourself to the CONTRIBUTORS file to sign the CLA.");
+              console.error("⚠️ Please add yourself to the CONTRIBUTORS.md file to sign the CLA.");
               process.exit(1);
             }
