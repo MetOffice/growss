@@ -4,7 +4,7 @@
 #  under which the code may be used.
 # ------------------------------------------------------------------------------
 
-name: Fortran lint
+name: Lint
 on:
   workflow_call:
     inputs:
@@ -25,34 +25,26 @@ on:
         default: "3.14"
 
 jobs:
-  fortitude-linting:
-    name: Fortran lint
+  fortran-linting:
+    name: Fortran
     runs-on: ${{ inputs.runner }}
     timeout-minutes: ${{ inputs.timeout }}
+
+    env:
+      UV_PYTHON: ${{ inputs.python-version }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Setup uv and Python ${{ env.UV_PYTHON }}
+        uses: astral-sh/setup-uv@v7
         with:
-          python-version: ${{ inputs.python-version }}
+          python-version: ${{ env.UV_PYTHON }}
+          enable-cache: false
 
-      - name: Cache pip packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ inputs.python-version }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: minimize pip cache
-        run: python -m pip cache purge || true
-
-      - name: Install Fortitude Linter
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install fortitude-lint==0.7.3
+      - name: Install fortitude-lint
+        run: uv pip install fortitude-lint==0.7.3
 
       - name: Run Fortitude Linter
-        run: fortitude check --respect-gitignore --show-fixes --file-extensions=f90,F90,x90,X90 .
+        run: uv run fortitude check --respect-gitignore --show-fixes --file-extensions=f90,F90,x90,X90,t90,T90,pf .
