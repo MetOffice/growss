@@ -9,13 +9,12 @@ username to the CONTRIBUTORS file in that repository.
 name: CLA Check
 
 on:
-    pull_request_target:
+  pull_request_target:
 
 jobs:
-    cla_check:
-        uses: MetOffice/growss/.github/workflows/cla-check.yaml@main
-
-        # Optional
-        with:
-            runner: 'ubuntu-24.04'
+  cla_check:
+    uses: MetOffice/growss/.github/workflows/cla-check.yaml@main
+    # Optional
+    with:
+      runner: "ubuntu-24.04"
 ```
