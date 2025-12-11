@@ -30,7 +30,7 @@ jobs:
       UV_PYTHON: "3.14"
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
