@@ -197,7 +197,6 @@ jobs:
             }
 
             if (cla_met) {
-              await ensureLabel('cla-signed', COLOR_SIGNED, 'This contributor has signed the CLA.');
 
               // Different messages based on scenario
               if (signedOnBase && !contributorsModified) {
@@ -209,7 +208,6 @@ jobs:
               // Use Promise.allSettled for robust label management
               await Promise.allSettled([
                 github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-required' }),
-                github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['cla-signed'] })
               ]);
 
               // Delete old CLA comments since CLA is satisfied
