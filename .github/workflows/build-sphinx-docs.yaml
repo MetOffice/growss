@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------
-#  (c) Crown copyright Met Office. All rights reserved.
-#  The file LICENCE, distributed with this code, contains details of the terms
-#  under which the code may be used.
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
 # ------------------------------------------------------------------------------
 
 name: Build Sphinx Docs
@@ -52,7 +52,7 @@ jobs:
       BUILD_DIR: ${{ inputs.build-directory }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v6

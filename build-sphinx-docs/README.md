@@ -5,11 +5,11 @@ documentation from a local repository to GitHub Pages.
 
 ## Usage
 
-To use this workflow developers must have a `requirements.txt` file to define 
-the sphinx dependencies that will be used by the `build-sphinx-docs` workflow. 
-By default the workflow will look for a `requirements.txt` file in the top 
-level of the calling project repository. An example of a `requirements.txt`
-file which could run this workflow would be as follows:
+To use this workflow developers must have a `requirements.txt` file to define
+the sphinx dependencies that will be used by the `build-sphinx-docs` workflow.
+By default the workflow will look for a `requirements.txt` file in the top level
+of the calling project repository. An example of a `requirements.txt` file which
+could run this workflow would be as follows:
 
 ### Example requirements
 
@@ -53,9 +53,10 @@ Here the user would implement this file and replace each of the parameters with
 the respective data types as dictated by the inputs section of the
 `build-sphinx-docs.yaml` file.
 
-Following the calling of the `build-sphinx-docs` workflow, the `deploy-sphinx-docs`
-workflow can be used to deploy the generated html documentation to the GitHub
-webserver. This workflow can be called from a workflow using the form describe below:
+Following the calling of the `build-sphinx-docs` workflow, the
+`deploy-sphinx-docs` workflow can be used to deploy the generated html
+documentation to the GitHub webserver. This workflow can be called from a
+workflow using the form describe below:
 
 ### Deploy built HTML to GitHub Pages
 
@@ -69,10 +70,10 @@ steps:
       timeout: Timeout for the job in minutes (5)
 ```
 
-Both of these steps can be combined to produce a simple build and deploy documentation
-pipeline for a repository:
+Both of these steps can be combined to produce a simple build and deploy
+documentation pipeline for a repository:
 
-### Example continuous intergration pipeline in an external repository
+### Example continuous integration pipeline in an external repository
 
 An example workflow to build Sphinx documentation and deploy it to GitHub Pages
 when changes are pushed to the `main` branch:
@@ -92,9 +93,9 @@ jobs:
       requirements: /path/to/requirements.txt
       runner: ubuntu-24.04
       timeout: 10
-      docs-directory: '/path/to/documentation'
-      sphinx-opts: 'extra options'
-      build-directory: '/path/to/build/html'
+      docs-directory: "/path/to/documentation"
+      sphinx-opts: "extra options"
+      build-directory: "/path/to/build/html"
 
   deploy-docs:
     if: github.ref == 'refs/heads/main'

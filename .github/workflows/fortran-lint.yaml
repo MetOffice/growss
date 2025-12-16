@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------
-#  (c) Crown copyright Met Office. All rights reserved.
-#  The file LICENCE, distributed with this code, contains details of the terms
-#  under which the code may be used.
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
 # ------------------------------------------------------------------------------
 
 name: Lint
@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup uv and Python ${{ env.UV_PYTHON }}
         uses: astral-sh/setup-uv@v7
