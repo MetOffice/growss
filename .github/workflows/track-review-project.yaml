@@ -20,7 +20,7 @@ on:
         type: string
         default: 'PROJECT_ACTION_PAT'
 
-permissions: write-all
+permissions: read-all
 
 jobs:
   track_project:
