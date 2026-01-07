@@ -38,9 +38,9 @@ jobs:
           AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
           assignees=$(gh pr view -R "$REPO" "$PR_NUMBER" --json "assignees" | jq '.assignees | length')
-          if [[ "$assignees" -eq 0 ]]; then
-            gh pr edit -R "$REPO" "$PR_NUMBER" --add-assignee "$AUTHOR"
-          fi
+          # if [[ "$assignees" -eq 0 ]]; then
+          #   gh pr edit -R "$REPO" "$PR_NUMBER" --add-assignee "$AUTHOR"
+          # fi
 
       - name: Read Reviewers
         env:
