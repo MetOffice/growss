@@ -1,0 +1,232 @@
+# ------------------------------------------------------------------------------
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+# ------------------------------------------------------------------------------
+
+# This workflow runs whenever a pull request in the repository is marked as "ready for review".
+name: Track Review Project
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'The runner to use for the job'
+        required: false
+        type: string
+        default: 'ubuntu-24.04'
+      project_secret:
+        description: 'The name of the secret in the repository with access to projects'
+        required: false
+        type: string
+        default: 'PROJECT_ACTION_PAT'
+
+jobs:
+  track_project:
+    # Read reviewers from PR Summary
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 2
+
+    steps:
+      # Add the PR Author as the Assignee if no assignees
+      - name: Assign Author
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          assignees=$(gh pr view -R "$REPO" "$PR_NUMBER" --json "assignees" | jq '.assignees | length')
+          if [[ "$assignees" -eq 0 ]]; then
+            gh pr edit -R "$REPO" "$PR_NUMBER" --add-assignee "$AUTHOR"
+          fi
+
+      - name: Read Reviewers
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Running on PR #$PR_NUMBER in Repository $REPO"
+
+          SCITECH_REVIEWER=$(echo "$PR_BODY" | grep -oP "Sci/Tech Reviewer:\s?@\K([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})") || true
+          CODE_REVIEWER=$(echo "$PR_BODY" | grep -oP "Code Reviewer:\s?@\K([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})") || true
+
+          echo "Expected SciTech Reviewer: $SCITECH_REVIEWER"
+          echo "Expected Code Reviewer: $CODE_REVIEWER"
+
+          echo "SCITECH_REVIEWER=$SCITECH_REVIEWER" >> $GITHUB_ENV
+          echo "CODE_REVIEWER=$CODE_REVIEWER" >> $GITHUB_ENV
+
+      # Get Reviews by the SR and CR
+      - name: Get reviews and determine state
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          reviews=$(gh pr view -R "$REPO" "$PR_NUMBER" --json "reviews,reviewRequests")
+          sr_requested=$(echo "$reviews" | jq -r --arg sr "$SCITECH_REVIEWER" '[ .reviewRequests[] | select(.login == $sr) ] | length')
+          cr_requested=$(echo "$reviews" | jq -r --arg cr "$CODE_REVIEWER" '[ .reviewRequests[] | select(.login == $cr) ] | length')
+
+          # If there is no SR set and the CR review has been requested, assume this doesn't need an SR
+          if [[ -z "$SCITECH_REVIEWER" ]] && [[ "$cr_requested" -gt 0 ]]; then
+            echo "No SR set and CR requested so assuming this is trivial"
+          else
+            sr_reviews=$(echo "$reviews" | jq -r --arg sr "$SCITECH_REVIEWER" '[ .reviews[] | select(.author.login == $sr) ]')
+            sr_approved=$(echo "$sr_reviews" | jq -r '[ .[] | select(.state == "APPROVED") ] | length')
+            if [[ "$sr_approved" -eq 0 ]]; then
+              sr_rejected=$(echo "$sr_reviews" | jq -r '[ .[] | select((.state == "CHANGES_REQUESTED") or .state == "COMMENTED") ] | length')
+              if [[ "$sr_rejected" -gt 0 ]] && [[ "$sr_requested" -eq 0 ]]; then
+                required_state="Changes Requested"
+              else
+                required_state="SciTech Review"
+              fi
+              # Correct state set
+              echo "REQUIRED_STATE=$required_state" >> $GITHUB_ENV
+              exit 0
+            fi
+          fi
+
+          cr_reviews=$(echo "$reviews" | jq -r --arg cr "$CODE_REVIEWER" '[ .reviews[] | select(.author.login == $cr) ]')
+          cr_approved=$(echo "$cr_reviews" | jq -r '[ .[] | select(.state == "APPROVED") ] | length')
+          cr_rejected=$(echo "$cr_reviews" | jq -r '[ .[] | select((.state == "CHANGES_REQUESTED") or .state == "COMMENTED") ] | length')
+          if [[ "$cr_approved" -gt 0 ]]; then
+            required_state="Approved"
+          else
+            if [[ "$cr_rejected" -gt 0 ]] && [[ "$cr_requested" -eq 0 ]]; then
+              required_state="Changes Requested"
+            else
+              required_state="Code Review"
+            fi
+          fi
+
+          echo "REQUIRED_STATE=$required_state" >> $GITHUB_ENV
+          if [[ "$cr_requested" -eq 0 ]] && [[ "$cr_approved" -eq 0 ]] && [[ "$cr_rejected" -eq 0 ]]; then
+            echo "CR_REQUEST_REQUIRED=true" >> $GITHUB_ENV
+          fi
+
+      # If CR hasn't been requested and state is CR then add them as a reviewer
+      - name: Request CR review
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ -z "$CR_REQUEST_REQUIRED"  ]]; then
+            CR_REQUEST_REQUIRED=false
+          fi
+          if [[ "$CR_REQUEST_REQUIRED" = true ]] && [[ "$REQUIRED_STATE" == "Code Review" ]]; then
+            gh pr edit -R "$REPO" "$PR_NUMBER" --add-reviewer "$CODE_REVIEWER"
+          fi
+
+      # Get Project IDs for project and relevant fields
+      # Project Number hard coded to Simulation Systems Review Tracker
+      - name: Get project id's
+        env:
+          GH_TOKEN: secrets.${{ inputs.project_secret }}
+          ORGANIZATION: MetOffice
+          PROJECT_NUMBER: 376
+        run: |
+          gh api graphql -f query='
+            query($org: String!, $number: Int!) {
+              organization(login: $org){
+                projectV2(number: $number) {
+                  id
+                  fields(first:20) {
+                    nodes {
+                      ... on ProjectV2Field {
+                        id
+                        name
+                      }
+                      ... on ProjectV2SingleSelectField {
+                        id
+                        name
+                        options {
+                          id
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }' -f org=$ORGANIZATION -F number=$PROJECT_NUMBER > project_data.json
+
+          echo 'PROJECT_ID='$(jq '.data.organization.projectV2.id' project_data.json) >> $GITHUB_ENV
+          echo 'STATUS_FIELD_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .id' project_data.json) >> $GITHUB_ENV
+          echo 'STATUS_OPTION_ID='$(jq -r --arg status "$REQUIRED_STATE" '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .options[] | select(.name==$status) |.id' project_data.json) >> $GITHUB_ENV
+          echo 'SCITECH_REVIEW_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "SciTech Review") | .id' project_data.json) >> $GITHUB_ENV
+          echo 'CODE_REVIEW_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Code Review") | .id' project_data.json) >> $GITHUB_ENV
+
+      # Add the PR to the Project - get item id for this PR
+      - name: Add PR to project
+        env:
+          GH_TOKEN: secrets.${{ inputs.project_secret }}
+          PR_ID: ${{ github.event.pull_request.node_id }}
+        run: |
+          item_id="$( gh api graphql -f query='
+            mutation($project:ID!, $pr:ID!) {
+              addProjectV2ItemById(input: {projectId: $project, contentId: $pr}) {
+                item {
+                  id
+                }
+              }
+            }' -f project=$PROJECT_ID -f pr=$PR_ID --jq '.data.addProjectV2ItemById.item.id')"
+
+          # Stores the ID of the created item as an environment variable.
+          echo 'ITEM_ID='$item_id >> $GITHUB_ENV
+
+      # Sets Status, CR and SR Fields based on Output from previous steps
+      - name: Set fields
+        env:
+          GH_TOKEN: secrets.${{ inputs.project_secret }}
+        run: |
+          gh api graphql -f query='
+            mutation (
+              $project: ID!
+              $item: ID!
+              $status_field: ID!
+              $status_value: String!
+              $cr_field: ID!
+              $cr_value: String!
+              $sr_field: ID!
+              $sr_value: String!
+            ) {
+              set_status: updateProjectV2ItemFieldValue(input: {
+                projectId: $project
+                itemId: $item
+                fieldId: $status_field
+                value: {
+                  singleSelectOptionId: $status_value
+                  }
+              }) {
+                projectV2Item {
+                  id
+                  }
+              }
+              set_code_review: updateProjectV2ItemFieldValue(input: {
+                projectId: $project
+                itemId: $item
+                fieldId: $cr_field
+                value: {
+                  text: $cr_value
+                }
+              }) {
+                projectV2Item {
+                  id
+                }
+              }
+              set_scitech_review: updateProjectV2ItemFieldValue(input: {
+                projectId: $project
+                itemId: $item
+                fieldId: $sr_field
+                value: {
+                  text: $sr_value
+                }
+              }) {
+                projectV2Item {
+                  id
+                }
+              }
+            }' -f project=$PROJECT_ID -f item=$ITEM_ID -f status_field=$STATUS_FIELD_ID -f status_value=$STATUS_OPTION_ID -f cr_field=$CODE_REVIEW_ID -f cr_value="$CODE_REVIEWER" -f sr_field=$SCITECH_REVIEW_ID -f sr_value="$SCITECH_REVIEWER" --silent
