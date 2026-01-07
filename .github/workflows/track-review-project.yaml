@@ -14,11 +14,6 @@ on:
         required: false
         type: string
         default: 'ubuntu-24.04'
-      project_secret:
-        description: 'The name of the secret in the repository with access to projects'
-        required: false
-        type: string
-        default: 'PROJECT_ACTION_PAT'
 
 permissions: write-all
 
@@ -126,7 +121,7 @@ jobs:
       # Project Number hard coded to Simulation Systems Review Tracker
       - name: Get project id's
         env:
-          GH_TOKEN: secrets.${{ inputs.project_secret }}
+          GH_TOKEN: ${{ secrets.PROJECT_ACTION_PAT }}
           ORGANIZATION: MetOffice
           PROJECT_NUMBER: 376
         run: |
@@ -164,7 +159,7 @@ jobs:
       # Add the PR to the Project - get item id for this PR
       - name: Add PR to project
         env:
-          GH_TOKEN: secrets.${{ inputs.project_secret }}
+          GH_TOKEN: ${{ secrets.PROJECT_ACTION_PAT }}
           PR_ID: ${{ github.event.pull_request.node_id }}
         run: |
           item_id="$( gh api graphql -f query='
@@ -182,7 +177,7 @@ jobs:
       # Sets Status, CR and SR Fields based on Output from previous steps
       - name: Set fields
         env:
-          GH_TOKEN: secrets.${{ inputs.project_secret }}
+          GH_TOKEN: ${{ secrets.PROJECT_ACTION_PAT }}
         run: |
           gh api graphql -f query='
             mutation (

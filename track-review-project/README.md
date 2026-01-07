@@ -8,8 +8,7 @@ moving to the CR state. It will also add the PR author as an assignee if none
 exist.
 
 It requires a PAT with permissions to write to projects to be added as a secret
-to the repository - the default name of this secret is `PROJECT_ACTION_PAT` but
-this can be overridden with the `project_pat` input. Project edits made using
+to the repository with the name 'PROJECT_ACTION_PAT'. Project edits made using
 this token will be shown as performed by the owner of the token.
 
 ## Usage
@@ -30,5 +29,5 @@ jobs:
     # Optional inputs (with default values)
     with:
       runner: "ubuntu-22.04"
-      project_secret: "PROJECT_ACTION_PAT"
+      project_secret: ""
 ```
