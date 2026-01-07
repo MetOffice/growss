@@ -20,9 +20,10 @@ on:
         type: string
         default: 'PROJECT_ACTION_PAT'
 
+permissions: write-all
+
 jobs:
   track_project:
-    permissions: write-all
     # Read reviewers from PR Summary
     runs-on: ${{ inputs.runner }}
     timeout-minutes: 2
