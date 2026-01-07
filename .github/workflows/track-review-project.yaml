@@ -22,6 +22,7 @@ on:
 
 jobs:
   track_project:
+    permissions: write-all
     # Read reviewers from PR Summary
     runs-on: ${{ inputs.runner }}
     timeout-minutes: 2
