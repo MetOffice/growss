@@ -1,3 +1,9 @@
+# ------------------------------------------------------------------------------
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+# ------------------------------------------------------------------------------
+
 # This workflow runs whenever a pull request in the repository is marked as "ready for review".
 name: Track Review Project
 on:
