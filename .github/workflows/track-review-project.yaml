@@ -41,12 +41,28 @@ jobs:
       # If running based on the github
       - name: Checkout repo
         uses: actions/checkout@v6
+
+      - name: Determine PR Number
+        env:
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          FORK_OWNER: ${{ github.event.workflow_run.head_repository.owner.login }}
+          GH_TOKEN: ${{ github.token }}
+        run:
+          echo $OWNER
+          echo $REPO
+          echo $HEAD_BRANCH
+          echo $FORK_OWNER
+
+          PR_JSON=$(gh api \
+            -X GET "repos/$OWNER/$REPO/pulls?state=all&head=${FORK_OWNER}:${HEAD_BRANCH}")
+          PR_NUMBER=$(jq -r '.[0].number // empty' <<<"$PR_JSON")
+
       - name: Assign Author if no assignees
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "PR #:        ${{ github.event.workflow_run.pull_requests[0].number }}"
-          echo "PR:        ${{ github.event.workflow_run.pull_requests[0] }}"
           pr_data=$(gh pr view -R "$REPO" "$PR_NUM" --json assignees,author)
           if [[ $(echo "$pr_data" | jq '.assignees | length') -eq 0 ]]; then
             author=$(echo "$pr_data" | jq -r '.author.login')
