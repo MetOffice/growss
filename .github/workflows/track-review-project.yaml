@@ -69,7 +69,6 @@ jobs:
       - name: Extract PR Data
         run: |
           unzip context.zip
-          less context.json
           pr_num=$(jq -r '.pr_num' context.json)
           pr_id=$(jq -r '.pr_id' context.json)
           echo "PR_NUM=$pr_num" >> $GITHUB_ENV
