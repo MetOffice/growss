@@ -27,8 +27,7 @@ on:
         default: 376  # Simulation Systems Review Tracker
 
 permissions:
-  contents: read
-  pull-requests: write
+  write-all
 
 jobs:
   track_project:
@@ -36,10 +35,45 @@ jobs:
     timeout-minutes: 5
     env:
       REPO: ${{ github.repository }}
-      PR_NUM: ${{ github.event.pull_request.number }}
-      PR_ID: ${{ github.event.pull_request.node_id }}
 
     steps:
+      # Required as running from the workflow_run trigger
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Download PR data artifact
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
+
+            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "context.json"
+            })[0];
+
+            let download = await github.rest.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+
+            let fs = require('fs');
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/context.zip`, Buffer.from(download.data));
+
+      - name: Extract PR Data
+        run: |
+          unzip context.zip
+          pr_num=$(jq -r '.pr_num' context.json)
+          pr_id=$(jq -r '.pr_id' context.json)
+          echo "PR_NUM=$pr_num" >> $GITHUB_ENV
+          echo "PR_ID=$pr_id" >> $GITHUB_ENV
+
       - name: Assign Author if no assignees
         env:
           GH_TOKEN: ${{ github.token }}

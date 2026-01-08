@@ -1,0 +1,34 @@
+# ------------------------------------------------------------------------------
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+# ------------------------------------------------------------------------------
+
+# This workflow acts as a triggering workflow (via on: workflow_run) for the
+# track-review-project workflow. It uploads an artifact containing PR data for
+# the latter
+name: Trigger Review Project
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  trigger_project:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PR_NUM: ${{ github.event.pull_request.number }}
+      PR_ID: ${{ github.event.pull_request.node_id }}
+    steps:
+      - name: Triggering Workflow
+        run: |
+          echo "{\"pr_num\": $PR_NUM, \"pr_id\": \"$PR_ID\"}" >> context.json
+      - uses: actions/upload-artifact@v6
+        with:
+          name: context.json
+          path: context.json
+          retention-days: 1
