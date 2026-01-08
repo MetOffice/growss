@@ -48,7 +48,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "NUM: ${{ github.event.workflow_run.outputs.pr_num }}"
+          echo "NUM: ${{ github.event.workflow_run.jobs.trigger_project_workflow.outputs.pr_num }}"
           pr_data=$(gh pr view -R "$REPO" "$PR_NUM" --json assignees,author)
           if [[ $(echo "$pr_data" | jq '.assignees | length') -eq 0 ]]; then
             author=$(echo "$pr_data" | jq -r '.author.login')
