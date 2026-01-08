@@ -38,14 +38,14 @@ jobs:
       REPO: ${{ github.repository }}
 
     steps:
-      # If running based on the github
+      # Required as running from the workflow_run trigger
       - name: Checkout repo
         uses: actions/checkout@v6
 
+      # This workflow is run from the workflow_run trigger so needs to identify the PR info itself
       - name: Determine PR Data
         env:
           OWNER: ${{ github.repository_owner }}
-          REPO: ${{ github.event.repository.name }}
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
           FORK_OWNER: ${{ github.event.workflow_run.head_repository.owner.login }}
           GH_TOKEN: ${{ github.token }}
@@ -53,6 +53,9 @@ jobs:
           PR_JSON=$(gh api -X GET "repos/$OWNER/$REPO/pulls?state=all&head=${FORK_OWNER}:${HEAD_BRANCH}")
           pr_num=$(jq -r '.[0].number // empty' <<<"$PR_JSON")
           pr_id=$(jq -r '.[0].node_id // empty' <<<"$PR_JSON")
+          echo $PR_JSON
+          echo $pr_num
+          echo $pr_id
           echo "PR_NUM=$pr_num" >> $GITHUB_ENV
           echo "PR_ID=$pr_id" >> $GITHUB_ENV
 
