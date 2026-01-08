@@ -8,8 +8,7 @@ moving to the CR state. It will also add the PR author as an assignee if none
 exist.
 
 It requires a PAT with permissions to write to projects to be added as a secret
-to the repository - the default name of this secret is `PROJECT_ACTION_PAT` but
-this can be overridden with the `project_pat` input. Project edits made using
+to the repository with the name `PROJECT_ACTION_PAT`. Project edits made using
 this token will be shown as performed by the owner of the token.
 
 ## Usage
@@ -18,7 +17,7 @@ this token will be shown as performed by the owner of the token.
 name: Track Review Project
 
 on:
-  pull_request:
+  pull_request_target:
     types: ["opened", "synchronize", "reopened", "edited", "review_requested", "review_request_removed"]
   pull_request_review:
   pull_request_review_comment:
@@ -27,8 +26,11 @@ on:
 jobs:
   track_review_project:
     uses: MetOffice/growss/.github/workflows/track-review-project.yaml@main
+    secrets: inherit
     # Optional inputs (with default values)
     with:
       runner: "ubuntu-22.04"
-      project_secret: "PROJECT_ACTION_PAT"
+      project_org: "MetOffice"
+      project_number: 376
+
 ```
