@@ -72,13 +72,14 @@ jobs:
           cr_requested=$(echo "$reviews" | jq --arg cr "$code_reviewer" '[.reviewRequests[] | select(.login == $cr)] | length')
 
           # Determine required state
+          sr_approved=0
           if [[ -z "$scitech_reviewer" ]] && [[ "$cr_requested" -gt 0 ]]; then
             echo "No SR set and CR requested so assuming this is trivial"
           else
             sr_approved=$(echo "$reviews" | jq --arg sr "$scitech_reviewer" '[.reviews[] | select(.author.login == $sr and .state == "APPROVED")] | length')
             if [[ "$sr_approved" -eq 0 ]]; then
               sr_changes=$(echo "$reviews" | jq --arg sr "$scitech_reviewer" '[.reviews[] | select(.author.login == $sr and (.state == "CHANGES_REQUESTED" or .state == "COMMENTED"))] | length')
-              required_state=$([[ "$sr_changes" -gt 0 ]] && [[ "$sr_requested" -eq 0 ]] && echo "Changes Requested" || echo "SciTech Review")
+              required_state=$([[ "$sr_requested" -eq 0 ]] && [[ "sr_changes" -eq 0 ]] && echo "In Progress" || [[ "$sr_changes" -gt 0 ]] && [[ "$sr_requested" -eq 0 ]] && echo "Changes Requested" || echo "SciTech Review")
               echo "REQUIRED_STATE=$required_state" >> $GITHUB_ENV
               exit 0
             fi
@@ -89,6 +90,8 @@ jobs:
 
           if [[ "$cr_approved" -gt 0 ]]; then
             required_state="Approved"
+          elif [[ "cr_changes" -eq 0 ]] && [[ "$cr_requested" -eq 0 ]] && [[ "$sr_approved" -eq 0 ]]; then
+            required_state="In Progress"
           elif [[ "$cr_changes" -gt 0 ]] && [[ "$cr_requested" -eq 0 ]]; then
             required_state="Changes Requested"
           else
