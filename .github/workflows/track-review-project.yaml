@@ -54,6 +54,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -x
           pr_data=$(gh pr view -R "$REPO" "$PR_NUM" --json body,reviews,reviewRequests)
 
           # Extract reviewers from PR body
