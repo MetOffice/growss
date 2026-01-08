@@ -27,9 +27,7 @@ on:
         default: 376  # Simulation Systems Review Tracker
 
 permissions:
-  contents: read
-  artifact-metadata: read
-  pull-requests: write
+  write-all
 
 jobs:
   track_project:
