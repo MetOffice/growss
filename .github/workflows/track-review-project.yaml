@@ -79,9 +79,13 @@ jobs:
             sr_approved=$(echo "$reviews" | jq --arg sr "$scitech_reviewer" '[.reviews[] | select(.author.login == $sr and .state == "APPROVED")] | length')
             if [[ "$sr_approved" -eq 0 ]]; then
               sr_changes=$(echo "$reviews" | jq --arg sr "$scitech_reviewer" '[.reviews[] | select(.author.login == $sr and (.state == "CHANGES_REQUESTED" or .state == "COMMENTED"))] | length')
-              echo "HERE 1"
-              required_state=$(([[ "$sr_requested" -eq 0 ]] && [[ "$sr_changes" -eq 0 ]] && echo "In Progress") || ([[ "$sr_changes" -gt 0 ]] && [[ "$sr_requested" -eq 0 ]] && echo "Changes Requested") || echo "SciTech Review")
-              echo "HERE 2"
+              if [[ "$sr_requested" -eq 0 ]] && [[ "$sr_changes" -eq 0 ]]; then
+                required_state="In Progress"
+              elif [[ "$sr_changes" -gt 0 ]] && [[ "$sr_requested" -eq 0 ]]; then
+                required_state="Changes Requested"
+              else
+                required_state="SciTech Review"
+              fi
               echo "REQUIRED_STATE=$required_state" >> $GITHUB_ENV
               exit 0
             fi
