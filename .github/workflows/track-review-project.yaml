@@ -26,8 +26,7 @@ on:
         type: number
         default: 376  # Simulation Systems Review Tracker
     secrets:
-      PROJECT_ACTION_PAT:
-        required: true
+      PROJECT_ACTION_PAT: ${{ secrets.PROJECT_ACTION_PAT }}
 
 permissions:
   contents: read
