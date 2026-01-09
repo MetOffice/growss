@@ -51,6 +51,6 @@ on:
 
 jobs:
   trigger_project_workflow:
-    uses: MetOffice/growss/.github/workflows/trigger-project-workflow.yaml@develop
+    uses: MetOffice/growss/.github/workflows/trigger-project-workflow.yaml@main
     secrets: inherit
 ```
