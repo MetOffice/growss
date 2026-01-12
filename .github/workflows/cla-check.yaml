@@ -82,7 +82,6 @@ jobs:
           hash=$(git ls-remote origin $ref)
           if [[ -z $hash ]]; then
             echo "merge_ref_defined=false" >> $GITHUB_ENV
-            mkdir merge_branch
           else
             echo "merge_ref_defined=true" >> $GITHUB_ENV
           fi
@@ -100,12 +99,13 @@ jobs:
       # -- Check if CONTRIBUTORS.md was modified in this PR
       - name: Check if CONTRIBUTORS.md was modified in PR
         id: check_contributors_modified
-        working-directory: ./merge_branch
         run: |
           if [[ $merge_ref_defined == "true" ]]; then
             echo "::warning::Merge conflicts mean the check for modification of a signed CONTRIBUTORS.md file was not completed. Allowing this to pass while conflict exists."
             echo "modified=false" >> $GITHUB_OUTPUT
           else
+            cd merge_branch
+
             git fetch origin ${{ github.event.pull_request.base.ref }}
 
             # Use the base SHA directly for comparison (works with forks)
