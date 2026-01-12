@@ -77,9 +77,9 @@ jobs:
         working-directory: pr_branch
         run: |
           ref="refs/pull/${{ github.event.number }}/merge"
-          git rev-parse --verify $ref
-          exists=$?
-          echo $exists
+          ls .git/refs
+          ls .git/refs/pull
+          ls .git/refs/pull/110
 
       - name: Checkout Merge Branch
         id: checkout_merge
