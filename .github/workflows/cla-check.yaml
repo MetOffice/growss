@@ -74,12 +74,13 @@ jobs:
           fi
 
       - name: check ref exists
-        working-directory: pr_branch
+        working-directory: ./base_branch
+        shell: bash
         run: |
           ref="refs/pull/${{ github.event.number }}/merge"
-          ls .git/refs
-          ls .git/refs/pull
-          ls .git/refs/pull/110
+          git remote -v
+          git ls-remote origin $ref
+          git ls-remote origin refs/pull/110/merge
 
       - name: Checkout Merge Branch
         id: checkout_merge
