@@ -87,7 +87,7 @@ jobs:
           fi
 
       - name: Checkout Merge Branch
-        if: ${{ env.merge_ref_defined == 'true' }}
+        if: env.merge_ref_defined == 'true'
         id: checkout_merge
         uses: actions/checkout@v6
         continue-on-error: true
