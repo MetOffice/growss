@@ -81,13 +81,13 @@ jobs:
           ref="refs/pull/${{ github.event.number }}/merge"
           hash=$(git ls-remote origin $ref)
           if [[ -z $hash ]]; then
-            echo "merge_ref_defined=false" >> $GITHUB_OUTPUT
+            echo "merge_ref_defined=false" >> $GITHUB_ENV
           else
-            echo "merge_ref_defined=true" >> $GITHUB_OUTPUT
+            echo "merge_ref_defined=true" >> $GITHUB_ENV
           fi
 
       - name: Checkout Merge Branch
-        if: ${{ steps.check_merge_ref.merge_ref_defined == 'true' }}
+        if: ${{ env.merge_ref_defined == 'true' }}
         id: checkout_merge
         uses: actions/checkout@v6
         continue-on-error: true
@@ -101,7 +101,7 @@ jobs:
         id: check_contributors_modified
         working-directory: ./merge_branch
         run: |
-          if [[ ${{ steps.check_merge_ref.merge_ref_defined }} == "true" ]]; then
+          if [[ ${{ env.merge_ref_defined }} == "true" ]]; then
             echo "::warning::Merge conflicts mean the check for modification of a signed CONTRIBUTORS.md file was not completed. Allowing this to pass while conflict exists."
             echo "modified=false" >> $GITHUB_OUTPUT
           else
