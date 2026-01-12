@@ -82,6 +82,7 @@ jobs:
           hash=$(git ls-remote origin $ref)
           if [[ -z $hash ]]; then
             echo "merge_ref_defined=false" >> $GITHUB_ENV
+            mkdir merge_branch
           else
             echo "merge_ref_defined=true" >> $GITHUB_ENV
           fi
