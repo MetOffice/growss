@@ -74,6 +74,7 @@ jobs:
           fi
 
       - name: check ref exists
+        working-directory: pr_branch
         run: |
           ref="refs/pull/${{ github.event.number }}/merge"
           git rev-parse --verify $ref
