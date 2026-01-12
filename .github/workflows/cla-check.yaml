@@ -105,6 +105,7 @@ jobs:
               echo "modified=false" >> $GITHUB_OUTPUT
               echo "ℹ️ CONTRIBUTORS.md file was NOT modified in this PR."
             fi
+          fi
 
       # -- Step 3: Manage PR Labels, Comments, and Final Status (Consolidated)
       - name: Manage CLA Status, Labels, and Comments
