@@ -80,7 +80,9 @@ jobs:
           ref="refs/pull/${{ github.event.number }}/merge"
           git remote -v
           git ls-remote origin $ref
+          echo $?
           git ls-remote origin refs/pull/110/merge
+          echo $?
 
       - name: Checkout Merge Branch
         id: checkout_merge
