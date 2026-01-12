@@ -100,7 +100,7 @@ jobs:
       - name: Check if CONTRIBUTORS.md was modified in PR
         id: check_contributors_modified
         run: |
-          if [[ "$merge_ref_defined" == "true" ]]; then
+          if [[ "$merge_ref_defined" == "false" ]]; then
             echo "::warning::Merge conflicts mean the check for modification of a signed CONTRIBUTORS.md file was not completed. Allowing this to pass while conflict exists."
             echo "modified=false" >> $GITHUB_OUTPUT
           else
