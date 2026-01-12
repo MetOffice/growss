@@ -73,6 +73,13 @@ jobs:
             echo "🔴 CONTRIBUTORS.md file does not exist on PR branch."
           fi
 
+      - name: check ref exists
+        run: |
+          ref="refs/pull/${{ github.event.number }}/merge"
+          git rev-parse --verify $ref
+          exists=$?
+          echo $exists
+
       - name: Checkout Merge Branch
         id: checkout_merge
         uses: actions/checkout@v6
