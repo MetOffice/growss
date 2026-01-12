@@ -74,7 +74,9 @@ jobs:
           fi
 
       - name: Checkout Merge Branch
+        id: checkout_merge
         uses: actions/checkout@v6
+        continue-on-error: true
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: "refs/pull/${{ github.event.number }}/merge"
@@ -85,20 +87,24 @@ jobs:
         id: check_contributors_modified
         working-directory: ./merge_branch
         run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-
-          # Use the base SHA directly for comparison (works with forks)
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-
-          CHANGED_FILES=$(git diff --name-only $BASE_SHA)
-
-          if echo "$CHANGED_FILES" | grep -q "^CONTRIBUTORS.md$"; then
-            echo "modified=true" >> $GITHUB_OUTPUT
-            echo "📝 CONTRIBUTORS.md file was modified in this PR."
-          else
+          if [[ ${{ steps.checkout_merge.outcome }} == "failure" ]]; then
+            echo "::warn::Merge conflicts mean the check for modification of a signed CONTRIBUTORS.md file was not completed. Allowing this to pass while conflict exists."
             echo "modified=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ CONTRIBUTORS.md file was NOT modified in this PR."
-          fi
+          else
+            git fetch origin ${{ github.event.pull_request.base.ref }}
+
+            # Use the base SHA directly for comparison (works with forks)
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+
+            CHANGED_FILES=$(git diff --name-only $BASE_SHA)
+
+            if echo "$CHANGED_FILES" | grep -q "^CONTRIBUTORS.md$"; then
+              echo "modified=true" >> $GITHUB_OUTPUT
+              echo "📝 CONTRIBUTORS.md file was modified in this PR."
+            else
+              echo "modified=false" >> $GITHUB_OUTPUT
+              echo "ℹ️ CONTRIBUTORS.md file was NOT modified in this PR."
+            fi
 
       # -- Step 3: Manage PR Labels, Comments, and Final Status (Consolidated)
       - name: Manage CLA Status, Labels, and Comments
