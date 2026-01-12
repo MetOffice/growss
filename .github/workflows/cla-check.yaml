@@ -104,6 +104,7 @@ jobs:
             echo "::warning::Merge conflicts mean the check for modification of a signed CONTRIBUTORS.md file was not completed. Allowing this to pass while conflict exists."
             echo "modified=false" >> $GITHUB_OUTPUT
           else
+            echo "HERE"
             cd merge_branch
 
             git fetch origin ${{ github.event.pull_request.base.ref }}
