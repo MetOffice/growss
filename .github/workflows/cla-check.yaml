@@ -144,10 +144,9 @@ jobs:
             const invalidModify = signedOnBase && contributorsModified;
 
             // CLA is met if:
-            //  * (1) Didn't Invalidly Modify the PR and
-            //      * (2) signed on both base and PR, OR
-            //      * (3) signed on base and didn't modify CONTRIBUTORS.md
-            const cla_met = !invalidModify && ((signedOnBase && signedOnPr) || (signedOnBase && !contributorsModified));
+            //  * Didn't Invalidly Modify the CONTRIBUTORS and
+            //  * signed on either base or PR
+            const cla_met = !invalidModify && (signedOnBase || signedOnPr);
 
             // Helper function to create or update a label with a specific COLOUR
             async function ensureLabel(name, COLOUR, description) {
