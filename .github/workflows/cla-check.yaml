@@ -151,12 +151,24 @@ jobs:
             // Helper function to create or update a label with a specific COLOUR
             async function ensureLabel(name, COLOUR, description) {
               try {
-                await github.rest.issues.updateLabel({ owner, repo, name, COLOUR, description });
+                await github.rest.issues.updateLabel({
+                  owner: owner,
+                  repo: repo,
+                  name: name,
+                  description: description,
+                  color: COLOUR
+                });
                 console.log(`Updated label: ${name} with COLOUR ${COLOUR}`);
               } catch (error) {
                 // If update fails (label doesn't exist), create it
                 try {
-                  await github.rest.issues.createLabel({ owner, repo, name, COLOUR, description });
+                  await github.rest.issues.createLabel({
+                    owner: owner,
+                    repo: repo,
+                    name: name,
+                    description: description,
+                    color: COLOUR
+                  });
                   console.log(`Created new label: ${name} with COLOUR ${COLOUR}`);
                 } catch (createError) {
                   console.log(`Error with label ${name}:`, createError.message);
@@ -207,7 +219,7 @@ jobs:
 
             // Handle case where contributor modified the file when already on it
             if (invalidModify) {
-              await ensureLabel('cla-modified', COLOUR_MODIFIED, 'CLA signature has been modified.');
+              await ensureLabel('cla-modified', COLOUR_MODIFIED, 'The CLA has been modified as part of this PR - added by GA');
               console.log('⚠️ Contributor was in base branch but has modified the file.');
 
               // Ensure labels are correct
@@ -248,7 +260,7 @@ jobs:
 
             } else if (!signedOnBase && signedOnPr) {
               // New contributor signing CLA for the first time
-              await ensureLabel('cla-signed', COLOUR_SIGNED, 'This contributor has signed the CLA.');
+              await ensureLabel('cla-signed', COLOUR_SIGNED, 'The CLA has been signed as part of this PR - added by GA');
               console.log('✅ New contributor has signed the CLA in PR branch.');
               await Promise.allSettled([
                 github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-required' }),
@@ -259,7 +271,7 @@ jobs:
               await deleteOldClaComments();
 
             } else {
-              await ensureLabel('cla-required', COLOUR_REQUIRED, 'CLA signature is required for this PR.');
+              await ensureLabel('cla-required', COLOUR_REQUIRED, 'The CLA has not yet been signed by the author of this PR - added by GA');
               console.log('❌ CLA condition NOT met. Adding required label and ensuring signed label is absent.');
 
               // Ensure labels are correct
