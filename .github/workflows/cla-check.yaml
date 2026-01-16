@@ -167,7 +167,7 @@ jobs:
             // Define desired COLOURs and descriptions for consistency
             const COLOUR_SIGNED = '0052cc'; // Blue
             const COLOUR_REQUIRED = 'b60205'; // Red
-            const COLOUR_MODIFIED = 'F56F27'; // Orange
+            const COLOUR_MODIFIED = 'f56f27'; // Orange
 
             // Helper function to delete old CLA-related comments from this bot
             async function deleteOldClaComments() {
