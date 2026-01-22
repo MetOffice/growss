@@ -143,11 +143,6 @@ jobs:
             // This may be valid but will require an admin to ok it
             const invalidModify = signedOnBase && contributorsModified;
 
-            // CLA is met if:
-            //  * Didn't Invalidly Modify the CONTRIBUTORS and
-            //  * signed on either base or PR
-            const cla_met = !invalidModify && (signedOnBase || signedOnPr);
-
             // Helper function to create or update a label with a specific COLOUR
             async function ensureLabel(name, COLOUR, description) {
               try {
@@ -215,7 +210,7 @@ jobs:
               }
             }
 
-            console.log(`CLA Met: ${cla_met} (Base: ${signedOnBase}, PR: ${signedOnPr}, Modified: ${contributorsModified}, Invalid Modify: ${invalidModify})`);
+            console.log(`Base: ${signedOnBase}, PR: ${signedOnPr}, Modified: ${contributorsModified}, Invalid Modify: ${invalidModify}`);
 
             // Handle case where contributor modified the file when already on it
             if (invalidModify) {
@@ -225,6 +220,7 @@ jobs:
               // Ensure labels are correct
               await Promise.allSettled([
                 github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-signed' }),
+                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-required' }),
                 github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['cla-modified'] })
               ]);
 
@@ -241,7 +237,7 @@ jobs:
               process.exit(1);
             }
 
-            if (cla_met) {
+            if (signedOnBase) {
 
               // Different messages based on scenario
               if (signedOnBase && !contributorsModified) {
@@ -258,12 +254,13 @@ jobs:
               // Delete old CLA comments since CLA is satisfied
               await deleteOldClaComments();
 
-            } else if (!signedOnBase && signedOnPr) {
+            } else if (signedOnPr) {
               // New contributor signing CLA for the first time
               await ensureLabel('cla-signed', COLOUR_SIGNED, 'The CLA has been signed as part of this PR - added by GA');
               console.log('✅ New contributor has signed the CLA in PR branch.');
               await Promise.allSettled([
                 github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-required' }),
+                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-modified' }),
                 github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['cla-signed'] })
               ]);
 
@@ -277,6 +274,7 @@ jobs:
               // Ensure labels are correct
               await Promise.allSettled([
                 github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-signed' }),
+                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-modified' }),
                 github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['cla-required'] })
               ]);
 
