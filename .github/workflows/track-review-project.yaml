@@ -74,7 +74,8 @@ jobs:
           pr_num=$(jq -r '.pr_num' context.json)
           pr_id=$(jq -r '.pr_id' context.json)
           echo "PR_NUM=$pr_num" >> $GITHUB_ENV
-          echo "PR_ID=$pr_id" >> $GITHUB_ENV
+         unzip -q context.zip
+         jq -r '"PR_NUM=\(.pr_num)\nPR_ID=\(.pr_id)"' context.json >> $GITHUB_ENV
 
       - name: Assign Author if no assignees
         continue-on-error: true
