@@ -146,13 +146,12 @@ jobs:
 
           echo "REQUIRED_STATE=$required_state" >> $GITHUB_ENV
 
-      - name: Request SciTech review, if needed
-        continue-on-error: true
+      - name: Request SciTech review, if needed        
         if: env.SR_REQUEST_REQUIRED == 'true' && env.REQUIRED_STATE == 'SciTech Review' && env.SCITECH_REVIEWER != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh pr edit -R "$REPO" "$PR_NUM" --add-reviewer "$SCITECH_REVIEWER"
+        run: gh pr edit -R "$REPO" "$PR_NUM" --add-reviewer "$SCITECH_REVIEWER"
 
       - name: Request code review, if needed
         continue-on-error: true
