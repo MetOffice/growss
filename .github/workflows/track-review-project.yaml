@@ -130,8 +130,8 @@ jobs:
             fi
           fi
 
-          # SR complete or trivial PR        
-  
+          # SR complete or trivial PR so move to code review states
+
           if [[ "$cr_approved" -gt 0 ]]; then
             required_state="Approved"
           elif [[ "cr_changes" -eq 0 ]] && [[ "$cr_requested" -eq 0 ]] && [[ "$sr_approved" -eq 0 ]]; then
