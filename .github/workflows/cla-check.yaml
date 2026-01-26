@@ -108,10 +108,7 @@ jobs:
 
             git fetch origin ${{ github.event.pull_request.base.ref }}
 
-            # Use the base SHA directly for comparison (works with forks)
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-
-            CHANGED_FILES=$(git diff --name-only $BASE_SHA)
+            CHANGED_FILES=$(git diff --name-only $GITHUB_BASE_REF)
 
             if echo "$CHANGED_FILES" | grep -q "^CONTRIBUTORS.md$"; then
               echo "modified=true" >> $GITHUB_OUTPUT
