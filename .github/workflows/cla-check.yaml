@@ -108,7 +108,7 @@ jobs:
 
             git fetch origin ${{ github.event.pull_request.base.ref }}
 
-            CHANGED_FILES=$(git diff --name-only $GITHUB_BASE_REF)
+            CHANGED_FILES=$(git diff --name-only origin/$GITHUB_BASE_REF)
 
             if echo "$CHANGED_FILES" | grep -q "^CONTRIBUTORS.md$"; then
               echo "modified=true" >> $GITHUB_OUTPUT
