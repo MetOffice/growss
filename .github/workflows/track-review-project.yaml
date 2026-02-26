@@ -88,7 +88,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          pr_data=$(gh pr view -R "$REPO" "$PR_NUM" --json body,reviews,reviewRequests)
+          pr_data=$(gh pr view -R "$REPO" "$PR_NUM" --json body,reviews,reviewRequests,state)
 
           # Extract reviewers from PR body
           pr_body=$(echo "$pr_data" | jq -r '.body')
@@ -100,6 +100,16 @@ jobs:
           echo "SCITECH_REVIEWER=$scitech_reviewer" >> $GITHUB_ENV
           echo "CODE_REVIEWER=$code_reviewer" >> $GITHUB_ENV
 
+          # If the PR isn't OPEN then required project state is "Done"
+          # This marks the PR as Done whether it has been merged or not
+          # Draft PRs have an OPEN state
+          state=$(echo "$pr_data" | jq -r '.state')
+          if [[ "$state" != "OPEN" ]]; then
+            required_state="Done"
+            echo "REQUIRED_STATE=$required_state" >> $GITHUB_ENV
+            exit 0
+          fi
+
           # Determine review state
           reviews=$(echo "$pr_data" | jq -c '{reviews, reviewRequests}')
           sr_requested=$(echo "$reviews" | jq --arg sr "$scitech_reviewer" '[.reviewRequests[] | select(.login == $sr)] | length')
@@ -109,10 +119,13 @@ jobs:
           sr_approved=$(echo "$reviews" | jq --arg sr "$scitech_reviewer" '[.reviews[] | select(.author.login == $sr and .state == "APPROVED")] | length')
           sr_changes=$(echo "$reviews" | jq --arg sr "$scitech_reviewer" '[.reviews[] | select(.author.login == $sr and (.state == "CHANGES_REQUESTED" or .state == "COMMENTED"))] | length')
 
+          cr_approved=$(echo "$reviews" | jq --arg cr "$code_reviewer" '[.reviews[] | select(.author.login == $cr and .state == "APPROVED")] | length')
+          cr_changes=$(echo "$reviews" | jq --arg cr "$code_reviewer" '[.reviews[] | select(.author.login == $cr and (.state == "CHANGES_REQUESTED" or .state == "COMMENTED"))] | length')
+
           [[ ! -z "$scitech_reviewer" ]] && [[ "$sr_requested" -eq 0 ]] && [[ "$sr_approved" -eq 0 ]] && [[ "$sr_changes" -eq 0 ]] && echo "SR_REQUEST_REQUIRED=true" >> $GITHUB_ENV
 
-          if [[ -z "$scitech_reviewer" ]] && [[ "$cr_requested" -gt 0 ]]; then
-            echo "No SR set and CR requested so assuming this is trivial"
+          if [[ -z "$scitech_reviewer" ]] && [[ "$cr_requested" -gt 0 || "$cr_approved" -gt 0 || "$cr_changes" -gt 0 ]]; then
+            echo "No SR set and CR in progress so assuming this is trivial"
           else
             if [[ "$sr_approved" -eq 0 ]]; then
               if [[ -z "$scitech_reviewer" ]] && [[ "$sr_changes" -eq 0 ]]; then
@@ -127,8 +140,7 @@ jobs:
             fi
           fi
 
-          cr_approved=$(echo "$reviews" | jq --arg cr "$code_reviewer" '[.reviews[] | select(.author.login == $cr and .state == "APPROVED")] | length')
-          cr_changes=$(echo "$reviews" | jq --arg cr "$code_reviewer" '[.reviews[] | select(.author.login == $cr and (.state == "CHANGES_REQUESTED" or .state == "COMMENTED"))] | length')
+          # SR complete or trivial PR so move to code review states
 
           if [[ "$cr_approved" -gt 0 ]]; then
             required_state="Approved"

@@ -1,9 +1,8 @@
-# ------------------------------------------------------------------------------
-# (c) Crown copyright Met Office. All rights reserved.
+# -----------------------------------------------------------------------------
+# (C) Crown copyright Met Office. All rights reserved.
 # The file LICENCE, distributed with this code, contains details of the terms
 # under which the code may be used.
-# ------------------------------------------------------------------------------
-
+# -----------------------------------------------------------------------------
 name: CLA Checker
 on:
   workflow_call:
@@ -13,6 +12,11 @@ on:
         required: false
         type: string
         default: 'ubuntu-24.04'
+      cla-url:
+        description: 'URL to the CLA document'
+        required: false
+        type: string
+        default: 'https://github.com/MetOffice/Momentum/blob/main/CLA.md'
 
 permissions:
   contents: read
@@ -29,13 +33,27 @@ jobs:
           ref: ${{ github.ref }}
           path: base_branch
 
+      - name: Validate Author Username
+        id: validate_author
+        run: |
+          AUTHOR="${{ github.event.pull_request.user.login }}"
+          # GitHub usernames: alphanumeric + hyphen, 1-39 chars,
+          # cannot start/end with hyphen, cannot contain consecutive hyphens
+          if [[ ! "$AUTHOR" =~ ^[a-zA-Z0-9]([a-zA-Z0-9]|-[a-zA-Z0-9]){0,37}[a-zA-Z0-9]?$ ]]; then
+            echo "::error::Invalid GitHub username format detected: $AUTHOR"
+            echo "This may indicate a security issue or data integrity problem."
+            exit 1
+          fi
+          echo "✅ Username validation passed for: $AUTHOR"
+          echo "validated_author=$AUTHOR" >> "$GITHUB_OUTPUT"
+
       - name: Determine if contributor exists in base
         id: check_contributor_base
         working-directory: ./base_branch
         run: |
-          AUTHOR="${{ github.event.pull_request.user.login }}"
+          AUTHOR="${{ steps.validate_author.outputs.validated_author }}"
           if [ -f "CONTRIBUTORS.md" ]; then
-            if grep -qE "\|\s*$AUTHOR\s*\|" CONTRIBUTORS.md; then
+            if grep -qP "^\s*\|\s*\Q$AUTHOR\E\s*\|" CONTRIBUTORS.md; then
               echo "on_base=true" >> $GITHUB_OUTPUT
               echo "🎉 $AUTHOR has already signed the CLA on base branch."
             else
@@ -59,9 +77,10 @@ jobs:
         id: check_contributor_pr
         working-directory: pr_branch
         run: |
-          AUTHOR="${{ github.event.pull_request.user.login }}"
+          AUTHOR="${{ steps.validate_author.outputs.validated_author }}"
           if [ -f "CONTRIBUTORS.md" ]; then
-            if grep -qE "\|\s*$AUTHOR\s*\|" CONTRIBUTORS.md; then
+            # if grep -qE "\|\s*$AUTHOR\s*\|" CONTRIBUTORS.md; then
+            if grep -qP "^\s*\|\s*\Q$AUTHOR\E\s*\|" CONTRIBUTORS.md; then
               echo "on_pr=true" >> $GITHUB_OUTPUT
               echo "✅ $AUTHOR is in the CONTRIBUTORS.md file on PR branch."
             else
@@ -96,7 +115,6 @@ jobs:
           ref: "refs/pull/${{ github.event.number }}/merge"
           path: merge_branch
 
-      # -- Check if CONTRIBUTORS.md was modified in this PR
       - name: Check if CONTRIBUTORS.md was modified in PR
         id: check_contributors_modified
         run: |
@@ -104,16 +122,14 @@ jobs:
             echo "::warning::Merge conflicts mean the check for modification of a signed CONTRIBUTORS.md file was not completed. Allowing this to pass while conflict exists."
             echo "modified=false" >> $GITHUB_OUTPUT
           else
-            cd merge_branch
+            cd merge_branch || exit 1
 
-            git fetch origin ${{ github.event.pull_request.base.ref }}
+            git fetch origin "${{ github.event.pull_request.base.ref }}"
 
-            # Use the base SHA directly for comparison (works with forks)
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            # Only check for exact CONTRIBUTORS.md file (not subdirectories)
+            CHANGED_FILES=$(git diff --name-only origin/$GITHUB_BASE_REF -- CONTRIBUTORS.md)
 
-            CHANGED_FILES=$(git diff --name-only $BASE_SHA)
-
-            if echo "$CHANGED_FILES" | grep -q "^CONTRIBUTORS.md$"; then
+            if [ -n "$CHANGED_FILES" ]; then
               echo "modified=true" >> $GITHUB_OUTPUT
               echo "📝 CONTRIBUTORS.md file was modified in this PR."
             else
@@ -137,7 +153,25 @@ jobs:
             const issue_number = context.issue.number;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+
             const author = context.payload.pull_request.user.login;
+            // Validate author (GitHub usernames are alphanumeric + hyphens)
+            if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/.test(author)) {
+              console.error(`::error::Invalid username format: ${author}`);
+              process.exit(1);
+            }
+
+            const claUrl = '${{ inputs.cla-url }}';
+            // Validate CLA URL
+            try {
+              const url = new URL(claUrl);
+              if (url.protocol !== 'https:') {
+                throw new Error('CLA URL must use HTTPS protocol');
+              }
+            } catch (error) {
+              console.error(`Invalid CLA URL: ${error.message}`);
+              throw error;
+            }
 
             // Check if contributor was on base but modified the file
             // This may be valid but will require an admin to ok it
@@ -246,9 +280,11 @@ jobs:
                 console.log('✅ CLA condition met. Removing required label and adding signed label.');
               }
 
-              // Use Promise.allSettled for robust label management
+              // Remove all CLA-related labels when signed on base and file not modified
               await Promise.allSettled([
                 github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-required' }),
+                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-modified' }),
+                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-signed' })
               ]);
 
               // Delete old CLA comments since CLA is satisfied
@@ -282,7 +318,7 @@ jobs:
               await deleteOldClaComments();
 
               // Post CLA comment
-              const commentBody = `Hello @${author}! 👋\n\nThank you for your contribution. Since this is your first time contributing to this repository, we ask that you sign our Contributor Licence Agreement (CLA).\n\n📄 [You can read the CLA here](https://github.com/MetOffice/Momentum/blob/main/CLA.md).\n\nTo agree to the CLA, please add your details (**GitHub username**, Real Name, Affiliation, and Date) to the _CONTRIBUTORS.md_ file (create one, if required) in the development branch for this PR. After signing the CLA, you won't need to do this again for future PRs.`;
+              const commentBody = `Hello @${author}! 👋\n\nThank you for your contribution. Since this is your first time contributing to this repository, we ask that you sign our Contributor Licence Agreement (CLA).\n\n📄 [You can read the CLA here](${claUrl}).\n\nTo agree to the CLA, please add your details (**GitHub username**, Real Name, Affiliation, and Date) to the _CONTRIBUTORS.md_ file (create one, if required) in the development branch for this PR. After signing the CLA, you won't need to do this again for future PRs.`;
 
               await github.rest.issues.createComment({ owner, repo, issue_number, body: commentBody });
 

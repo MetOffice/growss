@@ -23,6 +23,46 @@ on:
         required: false
         type: string
         default: "3.14"
+      fortitude-version:
+        description: "The Fortitude linter version to use"
+        required: false
+        type: string
+        default: "0.7.3"
+      file-extensions:
+        description: "Comma-separated list of Fortran file extensions to check"
+        required: false
+        type: string
+        default: "f90,F90,x90,X90,t90,T90,pf,PF"
+      respect-gitignore:
+        description: "Whether to respect .gitignore files"
+        required: false
+        type: boolean
+        default: true
+      show-fixes:
+        description: "Whether to show suggested fixes"
+        required: false
+        type: boolean
+        default: true
+      show-statistics:
+        description: "Whether to show statistics"
+        required: false
+        type: boolean
+        default: true
+      source-path:
+        description: "Path to source code directory to lint"
+        required: false
+        type: string
+        default: "."
+      fail-on-error:
+        description: "Whether to fail the workflow on linting errors"
+        required: false
+        type: boolean
+        default: true
+      enable-cache:
+        description: "Whether to enable UV cache"
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   fortran-linting:
@@ -41,10 +81,14 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ env.UV_PYTHON }}
-          enable-cache: false
-
-      - name: Install fortitude-lint
-        run: uv pip install fortitude-lint==0.7.3
+          enable-cache: ${{ inputs.enable-cache }}
 
       - name: Run Fortitude Linter
-        run: uv run fortitude check --respect-gitignore --show-fixes --file-extensions=f90,F90,x90,X90,t90,T90,pf .
+        run: |
+          uvx --from fortitude-lint==${{ inputs.fortitude-version }} fortitude check \
+            ${{ inputs.respect-gitignore && '--respect-gitignore' || '' }} \
+            ${{ inputs.show-fixes && '--show-fixes' || '' }} \
+            ${{ inputs.show-statistics && '--statistics' || '' }} \
+            --file-extensions=${{ inputs.file-extensions }} \
+            ${{ inputs.source-path }}
+        continue-on-error: ${{ !inputs.fail-on-error }}

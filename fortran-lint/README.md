@@ -1,49 +1,143 @@
-# Fortran Linting workflow (using Fortitude)
+# Fortran Lint Workflow
 
-This reusable workflow serves as a a generic workflow to lint fortran code using
-the fortitude linter.
+A reusable GitHub Actions [workflow](../.github/workflows/fortran-lint.yaml)
+that performs Fortran code linting using the
+[Fortitude](https://github.com/PlasmaFAIR/fortitude) linter.
+
+## Features
+
+- 🔍 Configurable Fortran file extensions
+- 🎯 Customizable linter version
+- 📊 Optional statistics and fix suggestions
+- ⚙️ Flexible execution options
+- 🔄 Version-controlled Python environment
 
 ## Usage
 
-By default this workflow will check all the rules included in fortitude linter.
-However, should you wish to check only a certain set of rules in your local
-repository you can do this by implementing a `fortitude.toml` file in the
-top-level/root directory of your local repository, defining the rules which
-should be checked when running this reusable workflow from a caller workflow.
-The following toml file is an example of what your `fortitude.toml` file could
-look like:
+### Basic Usage
 
-### Example fortitude configuration
+This section provides instructions on how to use the fortran-lint tool in its
+most common scenarios. The basic workflow includes running the linter on Fortran
+source files to check for style violations, code quality issues, and potential
+errors.
 
-```toml
-[check]
-select = ["S", "T"]
-ignore = ["S001", "S051"]
-line-length = 132
-```
-
-In order to use this reusable workflow you should implement a calling workflow
-as a YAML file in your `.github/workflows` directory containing the follwing:
-
-### Example usage in caller workflow
+The `paths` filter ensures the workflow only runs when Fortran files (with
+`.f90` or `.F90` extensions) are modified in pull requests, avoiding unnecessary
+checks when other file types are changed. If paths filters are omitted, then
+default `file-extensions` are used instead (see
+[Input Parameters](#input-parameters)).
 
 ```yaml
-steps:
-  - name: Lint Fortran
-    uses: MetOffice/growss/.github/workflows/fortan-lint.yaml@main
+name: Lint Fortran Code
+on:
+  pull_request:
+    paths:
+      - "**.f90"
+      - "**.F90"
+  push:
+    branches:
+      - main
 
-    with:
-      runner: The runner to use for the job (ubuntu-latest)
-      timeout: The maximum time in minutes the job can run for (10)
-      python-version: The Python version to use (3.14)
+jobs:
+  fortran-lint:
+    uses: MetOffice/growss/.github/workflows/fortran-lint.yaml@main
 ```
 
-Where runner,timeout and python-version are all appropriately defined inputs to
-the workflow as defined in `MetOffice/growss/.github/workflows/fortan-lint.yaml`
+### Advanced Usage
 
-### Further details
+This section covers advanced configuration options and usage patterns for the
+Fortran linting tool. It provides detailed examples and explanations for users
+who need to customize the linting behavior beyond the basic setup, including
+custom rule configurations, integration with CI/CD pipelines, and handling
+complex project structures.
 
-Fortitude is a fortran linter developed and maintained by PlasmaFAIR. For
-further details on how to configure your `fortitude.toml` file and how to
-interpret error messages given by this reusable workflow please refer to the
-[fortitude doumentation](https://fortitude.readthedocs.io/en/latest/)
+```yaml
+name: Custom Fortran Lint
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  fortran-lint:
+    uses: MetOffice/growss/.github/workflows/fortran-lint.yaml@main
+    with:
+      # Runner configuration
+      runner: ubuntu-latest
+      timeout: 5
+
+      # Python and tooling versions
+      python-version: "3.12"
+      fortitude-version: "0.7.3"
+
+      # Linting options
+      file-extensions: "f90,F90,pf,PF"
+      source-path: "./src"
+      respect-gitignore: true
+      show-fixes: true
+      show-statistics: true
+
+      # Workflow behavior
+      fail-on-error: true
+      enable-cache: false
+```
+
+## Input Parameters
+
+| Parameter           | Description                             | Required | Default                         | Type    |
+| ------------------- | --------------------------------------- | -------- | ------------------------------- | ------- |
+| `runner`            | The runner to use for the job           | No       | `ubuntu-latest`                 | string  |
+| `timeout`           | Maximum time in minutes the job can run | No       | `10`                            | number  |
+| `python-version`    | Python version to use                   | No       | `3.14`                          | string  |
+| `fortitude-version` | Fortitude linter version                | No       | `0.7.3`                         | string  |
+| `file-extensions`   | Comma-separated Fortran file extensions | No       | `f90,F90,x90,X90,t90,T90,pf,PF` | string  |
+| `respect-gitignore` | Respect .gitignore files                | No       | `true`                          | boolean |
+| `show-fixes`        | Show suggested fixes                    | No       | `true`                          | boolean |
+| `show-statistics`   | Show linting statistics                 | No       | `true`                          | boolean |
+| `source-path`       | Path to source code directory           | No       | `.`                             | string  |
+| `fail-on-error`     | Fail workflow on linting errors         | No       | `true`                          | boolean |
+| `enable-cache`      | Enable UV cache                         | No       | `false`                         | boolean |
+
+## Examples
+
+### Lint Specific Directory
+
+```yaml
+jobs:
+  lint-src:
+    uses: MetOffice/growss/.github/workflows/fortran-lint.yaml@main
+    with:
+      source-path: "./src/fortran"
+      file-extensions: "f90,F90"
+```
+
+### Warning-Only Mode
+
+```yaml
+jobs:
+  lint-warning:
+    uses: MetOffice/growss/.github/workflows/fortran-lint.yaml@main
+    with:
+      fail-on-error: false
+      show-fixes: true
+```
+
+### Custom Extensions and Performance
+
+```yaml
+jobs:
+  lint-custom:
+    uses: MetOffice/growss/.github/workflows/fortran-lint.yaml@main
+    with:
+      file-extensions: "f90,F90,for,FOR"
+      timeout: 20
+      enable-cache: true
+```
+
+## About Fortitude
+
+[Fortitude](https://github.com/PlasmaFAIR/fortitude) is a modern Fortran linter
+that helps maintain code quality and consistency.
+
+## License
+
+&copy; Crown copyright Met Office. See LICENCE file for details.

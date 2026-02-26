@@ -1,0 +1,18 @@
+name: Track Review Project
+
+on:
+  workflow_run:
+    workflows: [Trigger Review Project]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  track_review_project:
+    uses: MetOffice/growss/.github/workflows/track-review-project.yaml@main
+    secrets: inherit
+    # Optional inputs (with default values)
+    with:
+      runner: "ubuntu-22.04"
+      project_org: "MetOffice"
+      project_number: 376
