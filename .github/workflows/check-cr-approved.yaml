@@ -27,7 +27,7 @@ jobs:
           echo "Running on PR #$PR_NUMBER in Repository $REPO"
 
           # -- 1. Extract the assigned Code Reviewer from the PR body
-          CODE_REVIEWER=$(echo "$PR_BODY" | grep -oP "Code Reviewer:\s?@\K([\w\-]{1,39})\b") || true
+          CODE_REVIEWER=$(echo "$PR_BODY" | perl -00 -ne 's/<!--.*?-->//gs; print if(s/.*Code Reviewer:\s*@([\w\-]{1,39})\b.*/\1\n/s);') || true
 
           if [[ -z "$CODE_REVIEWER" ]]; then
             echo "::error::No 'Code Reviewer: @<username>' found in the PR body."

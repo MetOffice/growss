@@ -92,8 +92,8 @@ jobs:
 
           # Extract reviewers from PR body
           pr_body=$(echo "$pr_data" | jq -r '.body')
-          scitech_reviewer=$(echo "$pr_body" | grep -oP "Sci/Tech Reviewer:\s?@\K([\w\-]{1,39})\b" || true)
-          code_reviewer=$(echo "$pr_body" | grep -oP "Code Reviewer:\s?@\K([\w\-]{1,39})\b" || true)
+          scitech_reviewer=$(echo "$pr_body" | perl -00 -ne 's/<!--.*?-->//gs; print if(s/.*Sci\/Tech Reviewer:\s*@([\w\-]{1,39})\b.*/\1\n/s);') || true
+          code_reviewer=$(echo "$pr_body" | perl -00 -ne 's/<!--.*?-->//gs; print if(s/.*Code Reviewer:\s*@([\w\-]{1,39})\b.*/\1\n/s);') || true
 
           echo "Expected SciTech Reviewer: ${scitech_reviewer:-None}"
           echo "Expected Code Reviewer: ${code_reviewer:-None}"
