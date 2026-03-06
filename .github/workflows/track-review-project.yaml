@@ -104,7 +104,7 @@ jobs:
           isDraft=$(echo "$pr_data" | jq -r '.isDraft')
           if [[ "$isDraft" == "true" ]]; then
             echo "PR is still in draft. Not requesting reviews or moving from In Progress"
-            required_state="Changes Requested"
+            required_state="In Progress"
             echo "REQUIRED_STATE=$required_state" >> $GITHUB_ENV
             echo "SR_REQUEST_REQUIRED=false" >> $GITHUB_ENV
             echo "CR_REQUEST_REQUIRED=false" >> $GITHUB_ENV
