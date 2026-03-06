@@ -34,14 +34,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Find broken symlinks
         run: |
-          broken_links=$(find . -xtype l)
+          broken_links=$(find . -path '.git' -prune -o -xtype l -printf '%p -> %l\n' || true)
           if [ -n "$broken_links" ]; then
-            echo "::error::Broken symlinks have been identified. See output for details"
-            for link_name in $broken_links; do
-              link_path=$(readlink $link_name)
-              echo "Broken link: $link_name -> $link_path"
-            done
+            echo "::error::Broken symlinks have been identified:"
+            printf "%s\n" "$broken_links"
             exit 1
-          else
-            echo "No broken symlinks identified"
           fi
+          echo "::notice::No broken symlinks identified."
