@@ -103,6 +103,7 @@ jobs:
           # If the PR is in Draft, then don't request reviews and set state as "In Progress"
           isDraft=$(echo "$pr_data" | jq -r '.isDraft')
           if [[ "$isDraft" == "true" ]]; then
+            echo "PR is still in draft. Not requesting reviews or moving from In Progress"
             required_state="Changes Requested"
             echo "REQUIRED_STATE=$required_state" >> $GITHUB_ENV
             echo "SR_REQUEST_REQUIRED=false" >> $GITHUB_ENV
