@@ -137,8 +137,10 @@ jobs:
 
           if [[ "$sr_expected" == "False" ]]; then
             echo "Not expecting a SciTech for this repository"
+            sr_approved=1
           elif [[ -z "$scitech_reviewer" ]] && [[ "$cr_requested" -gt 0 || "$cr_approved" -gt 0 || "$cr_changes" -gt 0 ]]; then
             echo "No SR set and CR in progress so assuming this is trivial"
+            sr_approved=1
           else
             if [[ "$sr_approved" -eq 0 ]]; then
               if [[ -z "$scitech_reviewer" ]] && [[ "$sr_changes" -eq 0 ]]; then
@@ -155,9 +157,9 @@ jobs:
 
           # SR complete or trivial PR so move to code review states
 
-          if [[ "$cr_approved" -gt 0 ]]; then
+          if [[ "$cr_approved" -gt 0 ]] && [[ "$sr_approved" -gt 0 ]]; then
             required_state="Approved"
-          elif [[ "cr_changes" -eq 0 ]] && [[ "$cr_requested" -eq 0 ]] && [[ "$sr_approved" -eq 0 ]]; then
+          elif [[ "$sr_approved" -eq 0 ]] || ([[ "cr_changes" -eq 0 ]] && [[ "$cr_requested" -eq 0 ]] && [[ "$sr_expected" == "True" ]]); then
             required_state="In Progress"
           elif [[ "$cr_changes" -gt 0 ]] && [[ "$cr_requested" -eq 0 ]]; then
             required_state="Changes Requested"
