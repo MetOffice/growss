@@ -92,6 +92,7 @@ jobs:
 
           # Extract reviewers from PR body
           pr_body=$(echo "$pr_data" | jq -r '.body')
+          sr_expected=$( (echo $pr_body | grep -iq "Sci/Tech Review" && echo "True") || echo "False")
           scitech_reviewer=$(echo "$pr_body" | perl -00 -ne 's/<!--.*?-->//gs; print if(s/.*Sci\/Tech Reviewer:\s*@([\w\-]{1,39})\b.*/\1\n/s);') || true
           code_reviewer=$(echo "$pr_body" | perl -00 -ne 's/<!--.*?-->//gs; print if(s/.*Code Reviewer:\s*@([\w\-]{1,39})\b.*/\1\n/s);') || true
 
@@ -132,9 +133,11 @@ jobs:
           cr_approved=$(echo "$reviews" | jq --arg cr "$code_reviewer" '[.reviews[] | select(.author.login == $cr and .state == "APPROVED")] | length')
           cr_changes=$(echo "$reviews" | jq --arg cr "$code_reviewer" '[.reviews[] | select(.author.login == $cr and (.state == "CHANGES_REQUESTED" or .state == "COMMENTED"))] | length')
 
-          [[ ! -z "$scitech_reviewer" ]] && [[ "$sr_requested" -eq 0 ]] && [[ "$sr_approved" -eq 0 ]] && [[ "$sr_changes" -eq 0 ]] && echo "SR_REQUEST_REQUIRED=true" >> $GITHUB_ENV
+          [[ "$sr_expected" == "True" ]] && [[ ! -z "$scitech_reviewer" ]] && [[ "$sr_requested" -eq 0 ]] && [[ "$sr_approved" -eq 0 ]] && [[ "$sr_changes" -eq 0 ]] && echo "SR_REQUEST_REQUIRED=true" >> $GITHUB_ENV
 
-          if [[ -z "$scitech_reviewer" ]] && [[ "$cr_requested" -gt 0 || "$cr_approved" -gt 0 || "$cr_changes" -gt 0 ]]; then
+          if [[ "$sr_expected" == "False" ]]; then
+            echo "Not expecting a SciTech for this repository"
+          elif [[ -z "$scitech_reviewer" ]] && [[ "$cr_requested" -gt 0 || "$cr_approved" -gt 0 || "$cr_changes" -gt 0 ]]; then
             echo "No SR set and CR in progress so assuming this is trivial"
           else
             if [[ "$sr_approved" -eq 0 ]]; then
