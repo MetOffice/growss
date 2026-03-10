@@ -1,0 +1,43 @@
+# ------------------------------------------------------------------------------
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+# ------------------------------------------------------------------------------
+
+name: Validate Symlinks
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'The runner to use for the job'
+        required: false
+        type: string
+        default: 'ubuntu-24.04'
+      timeout:
+        description: 'The time limit for the workflow, default 5 minutes'
+        required: false
+        type: number
+        default: 5
+
+permissions: read-all
+
+jobs:
+  validate_symlinks:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout }}
+
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Find broken symlinks
+        run: |
+          broken_links=$(find . -path '.git' -prune -o -xtype l -printf '%p -> %l\n' || true)
+          if [ -n "$broken_links" ]; then
+            echo "::error::Broken symlinks have been identified:"
+            printf "%s\n" "$broken_links"
+            exit 1
+          fi
+          echo "::notice::No broken symlinks identified."
