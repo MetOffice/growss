@@ -136,7 +136,7 @@ jobs:
           [[ "$sr_expected" == "True" ]] && [[ ! -z "$scitech_reviewer" ]] && [[ "$sr_requested" -eq 0 ]] && [[ "$sr_approved" -eq 0 ]] && [[ "$sr_changes" -eq 0 ]] && echo "SR_REQUEST_REQUIRED=true" >> $GITHUB_ENV
 
           if [[ "$sr_expected" == "False" ]]; then
-            echo "Not expecting a SciTech for this repository"
+            echo "Not expecting a SciTech Review for this repository"
             sr_approved=1
           elif [[ -z "$scitech_reviewer" ]] && [[ "$cr_requested" -gt 0 || "$cr_approved" -gt 0 || "$cr_changes" -gt 0 ]]; then
             echo "No SR set and CR in progress so assuming this is trivial"
@@ -155,15 +155,16 @@ jobs:
 
           # SR complete or trivial PR so move to code review states
 
-          if [[ "$cr_approved" -gt 0 ]] && [[ "$sr_approved" -gt 0 ]]; then
-            required_state="Approved"
-          elif [[ "$sr_approved" -eq 0 ]] || ([[ "cr_changes" -eq 0 ]] && [[ "$cr_requested" -eq 0 ]] && [[ "$sr_expected" == "True" ]]); then
+          [[ "$sr_approved" -gt 0 ]] && [[ ! -z "$code_reviewer" ]] && [[ "$cr_requested" -eq 0 ]] && [[ "$cr_approved" -eq 0 ]] && [[ "$cr_changes" -eq 0 ]] && echo "CR_REQUEST_REQUIRED=true" >> $GITHUB_ENV
+
+          if [[ -z "$code_reviewer" ]] && [[ "$cr_changes" -eq 0 ]]; then
             required_state="In Progress"
+          elif [[ "$cr_approved" -gt 0 ]]; then
+            required_state="Approved"
           elif [[ "$cr_changes" -gt 0 ]] && [[ "$cr_requested" -eq 0 ]]; then
             required_state="Changes Requested"
           else
             required_state="Code Review"
-            [[ "$cr_requested" -eq 0 ]] && [[ "$cr_approved" -eq 0 ]] && [[ "$cr_changes" -eq 0 ]] && echo "CR_REQUEST_REQUIRED=true" >> $GITHUB_ENV
           fi
 
           echo "REQUIRED_STATE=$required_state" >> $GITHUB_ENV
