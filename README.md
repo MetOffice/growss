@@ -19,9 +19,9 @@ This section intends to help users and developers quickly identify and resolve c
 
 ### YAML file being called from growss is not found
 
-1. Go into the settings of the repository that is calling a growss workflow.
-2. Click on the actions tab on the left then click general.
-3. Scroll down to the workflow permissions section.
-4. Ensure the setting is set to Read and Write Permission to all the repository to access other repositories in the MetOffice organisation
+1. Navigate to the **Settings** of the repository initiating the growss workflow.
+2. Select **Actions** > **General** from the left-hand sidebar.
+3. Scroll to the **Workflow permissions** section.
+4. Select **Read and write permissions** to allow the workflow to access other repositories within the MetOffice organisation.
 
 
