@@ -95,5 +95,6 @@ jobs:
             ${{ inputs.show-fixes && '--show-fixes' || '' }} \
             ${{ inputs.show-statistics && '--statistics' || '' }} \
             --file-extensions=${{ inputs.file-extensions }} \
+            --config-file=${{ inputs.config-path }} \
             ${{ inputs.source-path }}
         continue-on-error: ${{ !inputs.fail-on-error }}
