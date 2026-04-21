@@ -53,6 +53,11 @@ on:
         required: false
         type: string
         default: "."
+      config-path:
+        description: "Path to configuration file containing fortitude rules"
+        required: false
+        type: string
+        default: "fortitude.toml"
       fail-on-error:
         description: "Whether to fail the workflow on linting errors"
         required: false
