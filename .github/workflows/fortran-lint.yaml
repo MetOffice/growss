@@ -54,7 +54,7 @@ on:
         type: string
         default: "."
       config-path:
-        description: "Path to configuration file containing fortitude rules"
+        description: "Path to configuration file with rules"
         required: false
         type: string
         default: "fortitude.toml"
