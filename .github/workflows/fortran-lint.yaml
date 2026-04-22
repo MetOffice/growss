@@ -57,7 +57,6 @@ on:
         description: "Path to configuration file with rules"
         required: false
         type: string
-        default: "fortitude.toml"
       fail-on-error:
         description: "Whether to fail the workflow on linting errors"
         required: false
@@ -95,6 +94,6 @@ jobs:
             ${{ inputs.show-fixes && '--show-fixes' || '' }} \
             ${{ inputs.show-statistics && '--statistics' || '' }} \
             --file-extensions=${{ inputs.file-extensions }} \
-            --config-file=${{ inputs.config-path }} \
+            ${{ inputs.config-path && format('--config-file={0}', inputs.config-path) || '' }} \
             ${{ inputs.source-path }}
         continue-on-error: ${{ !inputs.fail-on-error }}
