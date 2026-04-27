@@ -95,7 +95,7 @@ jobs:
 | `show-fixes`        | Show suggested fixes                    | No       | `true`                          | boolean |
 | `show-statistics`   | Show linting statistics                 | No       | `true`                          | boolean |
 | `source-path`       | Path to source code directory           | No       | `.`                             | string  |
-| `config-path`       | Path to configuration file with rules   | No       | `fortitude.toml`                | string  |
+| `config-path`       | Path to configuration file with rules   | No       |                                 | string  |
 | `fail-on-error`     | Fail workflow on linting errors         | No       | `true`                          | boolean |
 | `enable-cache`      | Enable UV cache                         | No       | `false`                         | boolean |
 
