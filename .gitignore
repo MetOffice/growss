@@ -16,7 +16,6 @@
 
 # uv
 .venv
-uv.lock
 
 # Jetbrains
 .idea
