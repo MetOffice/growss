@@ -13,6 +13,13 @@ that performs Fortran code linting using the
 ### Advanced Usage
 
 ## Input Parameters
+| Parameter           | Description                             | Required | Default                         | Type    |
+| ------------------- | --------------------------------------- | -------- | ------------------------------- | ------- |
+| `runner`            | The runner to use for the job           | No       | `ubuntu-latest`                 | string  |
+| `timeout`           | Maximum time in minutes the job can run | No       | `10`                            | number  |
+| `ruff-version`      | Ruff linter version                     | No       | `0.15.0`                        | string  |
+| `source-path`       | Path to source code directory           | No       | `.`                             | string  |
+| `fail-on-error`     | Fail workflow on linting errors         | No       | `true`                          | boolean |
 
 ## About Ruff
 
