@@ -1,0 +1,57 @@
+# ------------------------------------------------------------------------------
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+# ------------------------------------------------------------------------------
+
+name: Lint
+on:
+  workflow_call:
+    inputs:
+      runner: "The runner to use for the job"
+      required: false
+      type: string
+      default: "ubuntu-latest"
+    timeout:
+      description: "The maximum time in minutes the job can run for"
+      required: "false"
+      type: number
+      default: 10
+    python-version:
+      description: "The python version to use"
+      required: false
+      type: string
+      default: "3.14"
+    ruff-version:
+      description: "The ruff linter version to use"
+      required: false
+      default: "0.15.0"
+    respect-gitignore:
+      description: "Whether to respect .gitignore files"
+      required: false
+      type: boolean
+      default: true
+    show-fixes:
+      description: "Whether to show suggested fixes"
+      required: false
+      type: boolean
+      default: true
+    show-statistics:
+      description: "Whether to show statistics"
+      required: false
+      type: boolean
+      default: true
+    source-path:
+      description: "Path to source code directory to lint"
+      required: false
+      type: string
+      default: "."
+    config-path:
+      description: "Path to configuration file with rules"
+      required: false
+      type: string
+    fail-on-error:
+      description: "Whether to fail the workflow on linting errors"
+      required: false
+      type: boolean
+      default: true
