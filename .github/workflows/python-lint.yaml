@@ -18,42 +18,36 @@ on:
         required: "false"
         type: number
         default: 10
-      python-version:
-        description: "The python version to use"
-        required: false
-        type: string
-        default: "3.14"
       ruff-version:
         description: "The ruff linter version to use"
         required: false
         default: "0.15.0"
-      respect-gitignore:
-        description: "Whether to respect .gitignore files"
-        required: false
-        type: boolean
-        default: true
-      show-fixes:
-        description: "Whether to show suggested fixes"
-        required: false
-        type: boolean
-        default: true
-      show-statistics:
-        description: "Whether to show statistics"
-        required: false
-        type: boolean
-        default: true
       source-path:
         description: "Path to source code directory to lint"
         required: false
         type: string
         default: "."
-      config-path:
-        description: "Path to configuration file with rules"
-        required: false
-        type: string
       fail-on-error:
         description: "Whether to fail the workflow on linting errors"
         required: false
         type: boolean
         default: true
+
+jobs:
+  python-linting:
+    name: Python
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Run Ruff over directory
+      uses: astral-sh/ruff-action@v4.0.0
+      with:
+        version: ${{ inputs.ruff-version }}
+        src: ${{ inputs.source-path }}
+        checksum: b949a853b208b0f818a150fb06490487db585a15becaeda28483dd662939030a
+      continue-on-error: ${{ !inputs.fail-on-error }}
 
