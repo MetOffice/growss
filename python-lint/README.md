@@ -4,11 +4,21 @@ A reusable GitHub Actions [workflow](../.github/workflows/python-lint.yaml)
 that performs Fortran code linting using the
 [Ruff](https://github.com/astral-sh/ruff) linter.
 
-## Features
-
 ## Usage
 
 ### Basic Usage
+
+```yaml
+name: Lint Python Code
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+jobs:
+  fortran-lint:
+    uses: MetOffice/growss/.github/workflows/python-lint.yaml@main
+```
 
 ### Advanced Usage
 
