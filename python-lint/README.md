@@ -27,6 +27,76 @@ jobs:
 
 ### Advanced Usage
 
+This section demonstrates how to customize the Python linting workflow using
+the available input parameters for more specific use cases.
+
+#### Custom Runner and Timeout
+
+Use a self-hosted runner with an extended timeout for larger codebases:
+
+```yaml
+jobs:
+  python-lint:
+    uses: MetOffice/growss/.github/workflows/python-lint.yaml@main
+    with:
+      runner: self-hosted
+      timeout: 30
+```
+
+#### Specific Ruff Version
+
+Pin to a specific version of Ruff for reproducible linting results:
+
+```yaml
+jobs:
+  python-lint:
+    uses: MetOffice/growss/.github/workflows/python-lint.yaml@main
+    with:
+      ruff-version: '0.14.0'
+```
+
+#### Custom Source Path
+
+Lint Python code in a specific directory (e.g., when Python code is in a
+subdirectory):
+
+```yaml
+jobs:
+  python-lint:
+    uses: MetOffice/growss/.github/workflows/python-lint.yaml@main
+    with:
+      source-path: 'src/python'
+```
+
+#### Non-Blocking Lint Checks
+
+Allow the workflow to continue even if linting errors are found (useful for
+gradual adoption or reporting-only mode):
+
+```yaml
+jobs:
+  python-lint:
+    uses: MetOffice/growss/.github/workflows/python-lint.yaml@main
+    with:
+      fail-on-error: false
+```
+
+#### Combined Configuration
+
+Example combining multiple parameters for a complex setup:
+
+```yaml
+jobs:
+  python-lint:
+    uses: MetOffice/growss/.github/workflows/python-lint.yaml@main
+    with:
+      runner: ubuntu-latest
+      timeout: 20
+      ruff-version: '0.15.0'
+      source-path: 'lib/python'
+      fail-on-error: true
+```
+
 ## Input Parameters
 | Parameter           | Description                             | Required | Default                         | Type    |
 | ------------------- | --------------------------------------- | -------- | ------------------------------- | ------- |
