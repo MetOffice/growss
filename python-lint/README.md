@@ -8,6 +8,11 @@ that performs Fortran code linting using the
 
 ### Basic Usage
 
+This section provides instructions on how to use the python-lint tool in its
+most common scenarios. The basic workflow includes running the linter on Python
+source files to check for style violations, code quality issues, and potential
+errors.
+
 ```yaml
 name: Lint Python Code
 on:
