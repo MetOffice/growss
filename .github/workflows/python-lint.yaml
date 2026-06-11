@@ -15,12 +15,13 @@ on:
         default: "ubuntu-latest"
       timeout:
         description: "The maximum time in minutes the job can run for"
-        required: "false"
+        required: false
         type: number
         default: 10
       ruff-version:
         description: "The ruff linter version to use"
         required: false
+        type: string
         default: "0.15.0"
       source-path:
         description: "Path to source code directory to lint"
