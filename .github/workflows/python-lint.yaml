@@ -49,5 +49,4 @@ jobs:
         with:
           version: ${{ inputs.ruff-version }}
           src: ${{ inputs.source-path }}
-          checksum: b949a853b208b0f818a150fb06490487db585a15becaeda28483dd662939030a
         continue-on-error: ${{ !inputs.fail-on-error }}
