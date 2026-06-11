@@ -34,11 +34,16 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: read
+
 jobs:
   python-linting:
     name: Python
     runs-on: ${{ inputs.runner }}
     timeout-minutes: ${{ inputs.timeout }}
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
