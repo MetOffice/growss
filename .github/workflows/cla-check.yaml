@@ -17,6 +17,11 @@ on:
         required: false
         type: string
         default: 'https://github.com/MetOffice/Momentum/blob/main/CLA.md'
+      ignore-users:
+        description: 'User names which can be ignored (e.g. dependabot) - should be useable as a bash array'
+        required: false
+        type: string
+        default: 'dependabot'
 
 permissions:
   contents: read
@@ -52,7 +57,9 @@ jobs:
         working-directory: ./base_branch
         run: |
           AUTHOR="${{ steps.validate_author.outputs.validated_author }}"
-          if [ -f "CONTRIBUTORS.md" ]; then
+          if [[ "${{inputs.ignore-users}}" == *"$AUTHOR"* ]]; then
+            echo "⏭️ Skipping verification of $AUTHOR" > $GITHUB_OUTPUT
+          elif [ -f "CONTRIBUTORS.md" ]; then
             if grep -qP "^\s*\|\s*\Q$AUTHOR\E\s*\|" CONTRIBUTORS.md; then
               echo "on_base=true" >> $GITHUB_OUTPUT
               echo "🎉 $AUTHOR has already signed the CLA on base branch."
