@@ -7,6 +7,8 @@ Contributor License Agreement (CLA) by checking their presence in the
 ## Features
 
 - ✅ Automatically checks if PR authors have signed the CLA
+  - Allows skipping of authors using input `ignore-users` to allow
+    dependabot and similar not to be added to the users list.
 - 🏷️ Manages PR labels (`cla-signed`, `cla-required`, `cla-modified`)
 - 💬 Posts helpful comments guiding contributors through the CLA process
 - 🔄 Validates both base and PR branches for existing signatures
@@ -52,14 +54,18 @@ jobs:
       # cla-url: "https://gitlab.com/yourorg/yourrepo/-/blob/main/CLA.md"
       # GitHub runner to use
       runner: "ubuntu-24.04"
+      # Allow the following users to make PR's without
+      # being added to CONTRIBUTORS.md
+      ingore-users: "dependabot ruffbot ghostadminperson"
 ```
 
 ## Input Parameters
 
-| Parameter | Description                                   | Required | Default                                                  |
-| --------- | --------------------------------------------- | -------- | -------------------------------------------------------- |
-| `cla-url` | URL to the CLA document (any valid HTTPS URL) | No       | `https://github.com/MetOffice/Momentum/blob/main/CLA.md` |
-| `runner`  | GitHub Actions runner to use for the job      | No       | `ubuntu-24.04`                                           |
+| Parameter      | Description                                   | Required | Default                                                  |
+| -------------- | --------------------------------------------- | -------- | -------------------------------------------------------- |
+| `cla-url`      | URL to the CLA document (any valid HTTPS URL) | No       | `https://github.com/MetOffice/Momentum/blob/main/CLA.md` |
+| `runner`       | GitHub Actions runner to use for the job      | No       | `ubuntu-24.04`                                           |
+| `ignore-users` | List of users to not check                    | No       | `dependabot`                                             |
 
 **Note:** The `cla-url` can point to any publicly accessible web page containing
 your CLA terms (e.g., GitHub, GitLab, Confluence, your organization's website,
