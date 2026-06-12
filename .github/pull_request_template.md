@@ -28,4 +28,4 @@ Code Reviewer: <!-- CR id, filled by SSD -->
 
 # Code Review
 
-- [ ] The changes are approriate and testing has been sufficient
+- [ ] The changes are appropriate and testing has been sufficient
