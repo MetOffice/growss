@@ -82,20 +82,16 @@ if [ ! -s commit-shas.txt ]; then
   exit 0
 fi
 
-# Parallelised extraction of pull requests directly from the repository's main PR list.
-# Instead of iterating through commits, we pull the 100 most recent merged PRs,
-# then match them against commit-shas.txt entirely locally using awk/grep.
-gh api "repos/${CALLER_REPO}/pulls?state=closed&per_page=100" --paginate \
-  --jq '.[] | select(.merged_at != null) |
+# Extract pull requests directly from the repository's main PR list.
+# Pull the 200 most recent merged PRs, then match them against commit-shas.txt
+{
+  gh api "repos/${CALLER_REPO}/pulls?state=closed&per_page=100&page=1"
+  gh api "repos/${CALLER_REPO}/pulls?state=closed&per_page=100&page=2"
+} | jq -r '.[] | select(.merged_at != null) |
   "\(.merge_commit_sha) \(.number) \(.title) | \(.user.login) | \([.labels[].name] | join(","))"' >recent-prs.txt
 
-# Create or clear file to store PR data
-: >pr-data.txt
-# Filter recent-prs down to ONLY those matching a commit SHA from our release range
-while IFS= read -r sha; do
-  [ -z "$sha" ] && continue
-  grep "^${sha} " recent-prs.txt >>pr-data.txt || true
-done <commit-shas.txt
+# -- Filter recent-prs down to ONLY those matching a commit SHA from our release range
+awk 'NR==FNR { shas[tolower($1)]=1; next } (tolower($1) in shas) { print }' commit-shas.txt recent-prs.txt >pr-data.txt
 
 # cat pr-data.txt  # debugging output
 if [ ! -s pr-data.txt ]; then

@@ -69,6 +69,9 @@ permissions:
 
 ## Usage
 
+To ensure deterministic behaviour across versions, use the same reference for
+both the workflow and `template-ref`.
+
 ### Variant A: Production Tag Auto-Trigger (Recommended)
 
 ```yaml

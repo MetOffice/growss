@@ -16,9 +16,8 @@ on:
         default: MetOffice/growss
       template-ref:
         description: Ref for the shared changelog template (branch, tag, or SHA)
-        required: false
+        required: true
         type: string
-        default: main
       template-path:
         description: Path to changelog template inside template-repo
         required: false
@@ -102,7 +101,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          TITLE="Release ${GITHUB_REF_NAME} (Draft)"
+          TITLE="Release ${GITHUB_REF_NAME} (Milestone?)"
 
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
             gh release edit "${GITHUB_REF_NAME}" \

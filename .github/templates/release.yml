@@ -7,7 +7,7 @@
 
 changelog:
   # Categories are evaluated sequentially from top to bottom.
-  # If a PR has multiple matching labels, it will land in the FIRST category it satisfies.
+  # If a PR has multiple matching labels, it will appear in all matching categories.
 
   categories:
     # (breaking-change) Critical infrastructure changes or API removals.
