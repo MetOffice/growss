@@ -15,6 +15,16 @@ changelog:
       labels:
         - "breaking-change"
 
+    # (dependency) Updates to third-party dependencies, including security patches.
+    - title: "📦 Dependency Updates"
+      labels:
+        - "dependency"
+
+    # (deprecated) Features or APIs that are being phased out, but still functional.
+    - title: "⚠️ Deprecations"
+      labels:
+        - "deprecated"
+
     # (bugfix) Placed near the top so that bug fixes always take priority
     # over general scientific updates or refactoring.
     - title: "🐛 Bug Fixes"
@@ -40,12 +50,11 @@ changelog:
       labels:
         - "documentation"
 
-    # (performance) Direct speed execution metrics or runtime improvements.
-    # (optimization) Memory, storage, or other resource optimizations.
+    # (optimisation) Direct speed execution metrics, runtime improvements,
+    #  Memory, storage, or other resource optimisations.
     - title: "⚡ Performance Improvements"
       labels:
-        - "performance"
-        - "optimization"
+        - "optimisation"
 
     # (refactor) Code cleanup, modularisation, or other internal improvements.
     - title: "♻️ Refactoring"
@@ -56,10 +65,9 @@ changelog:
   # from the final changelog output, taking ultimate precedence over categories above.
   exclude:
     labels:
-      - "build" # Changes affecting build tools or external compiler toolchains.
-      - "chore" # General housekeeping, license updates, or minor administrative tasks.
-      - "ci" # Modifications to GitHub Actions workflows or automation systems.
-      - "dependencies" # Automated third-party package upgrades (e.g., Dependabot alerts).
+      - "build"  # Changes affecting build tools or external compiler toolchains.
+      - "chore"  # General housekeeping, license updates, or minor administrative tasks.
+      - "ci"  # Modifications to GitHub Actions workflows or automation systems.
       - "ignore-changelog"  # Escape-hatch label to manually suppress a specific PR from the logs.
-      - "test" # Changes related to testing frameworks or test cases.
-      - "wip" # Work in progress PRs that are not ready for release.
+      - "test"  # Changes related to testing frameworks or test cases.
+      - "wip"  # Work in progress PRs that are not ready for release.

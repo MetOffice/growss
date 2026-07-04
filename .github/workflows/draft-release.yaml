@@ -8,48 +8,110 @@ name: Shared Global Release Engine
 
 on:
   workflow_call:
+    inputs:
+      template-repo:
+        description: Repository containing the shared changelog template
+        required: false
+        type: string
+        default: MetOffice/growss
+      template-ref:
+        description: Ref for the shared changelog template (branch, tag, or SHA)
+        required: false
+        type: string
+        default: main
+      template-path:
+        description: Path to changelog template inside template-repo
+        required: false
+        type: string
+        default: .github/templates/release.yml
+
+permissions:
+  contents: read
 
 jobs:
   run-release:
-    name: "Draft Release"
+    name: Draft Summary
     runs-on: ubuntu-latest
+    concurrency:
+      group: draft-release-${{ github.repository }}-${{ github.ref_name }}
+      cancel-in-progress: false
     permissions:
-      contents: write # Required to create the draft release in the calling repository
-    steps:
-      # 1. Fetch Shared Release Template from your central public repository
-      # Public repos can be fetched by anyone, but we pass GITHUB_TOKEN for private callers
-      - name: Fetch Shared Release Template
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          repository: MetOffice/growss
-          path: central-assets
-          token: ${{ secrets.GITHUB_TOKEN }} # Ensures private callers can cross the bridge safely
-          persist-credentials: false
+      contents: write # Required to create or update a release
+      pull-requests: read # Required to query PRs for changelog generation
 
-      # 2. Fetch Active Workspace Code
-      # Using tokens ensures private forks can checkout their own code safely
-      - name: Fetch Active Workspace Code
+    steps:
+      - name: Checkout caller repository with full history
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           path: local-code
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          fetch-tags: true
           persist-credentials: false
-          allow-unsafe-pr-checkout: true  # allow checking out PR head refs from forks
 
-      # 3. Inject the file from your custom templates folder into the active local workspace
-      - name: Inject Configuration Layout File
-        run: |
-          mkdir -p local-code/.github
-          cp central-assets/.github/templates/release.yml local-code/.github/release.yml
+      - name: Checkout shared template repository (sparse)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: ${{ inputs.template-repo }}
+          ref: ${{ inputs.template-ref }}
+          path: central-assets
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            .github/bin
+            .github/templates
 
-      # 4. Compile and create the native release using the injected template file
-      - name: Create Native Release Entry via GitHub CLI
+      - name: Compile categorised release notes from template labels
+        id: compile-release-notes
+        shell: bash
         env:
-          GITHUB_REF_NAME: ${{ github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CALLER_REPO: ${{ github.repository }}
+          TEMPLATE_REPO: ${{ inputs.template-repo }}
+          TEMPLATE_PATH: ${{ inputs.template-path }}
+          TEMPLATE_FILE: central-assets/${{ inputs.template-path }}
+          TEMPLATE_REF: ${{ inputs.template-ref }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
         run: |
-          cd local-code
-          gh release create "$GITHUB_REF_NAME" \
-            --title "Release $GITHUB_REF_NAME (Draft)" \
-            --generate-notes \
-            --draft
+          set -euo pipefail
+
+          # compile-release-notes.sh creates the release-notes.md
+          # draft release notes file, in workflow root, based on merged PRs and
+          # a shared changelog template. It is designed to be called from a
+          # GitHub Actions workflow, not directly by users.
+          # Usage:
+          #   bash central-assets/.github/bin/compile-release-notes.sh \
+          #     <caller_repo> <template_file> <github_sha> <github_ref_name> \
+          #     <template_repo> <template_ref> <template_path>
+
+          bash central-assets/.github/bin/compile-release-notes.sh \
+            "$CALLER_REPO" \
+            "$TEMPLATE_FILE" \
+            "$GITHUB_SHA" \
+            "$GITHUB_REF_NAME" \
+            "$TEMPLATE_REPO" \
+            "$TEMPLATE_REF" \
+            "$TEMPLATE_PATH"
+
+      - name: Create or update draft release
+        if: steps.compile-release-notes.outputs.has_commits == 'true'
+        working-directory: local-code
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          TITLE="Release ${GITHUB_REF_NAME} (Draft)"
+
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release edit "${GITHUB_REF_NAME}" \
+              --title "${TITLE}" \
+              --notes-file ../release-notes.md \
+              --draft
+          else
+            gh release create "${GITHUB_REF_NAME}" \
+              --title "${TITLE}" \
+              --notes-file ../release-notes.md \
+              --draft
+          fi
