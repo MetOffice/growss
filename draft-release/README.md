@@ -9,7 +9,7 @@ the current tag.
 This action is intentionally located at repository root level and has the
 following components:
 
-- `draft-release/action.yml` (composite action)
+- `draft-release/action.yaml` (composite action)
 - `draft-release/bin/compile-release-notes.sh` (compiler script)
 - `draft-release/templates/release.yml` (release category template)
 - `draft-release/README.md` (this document)
