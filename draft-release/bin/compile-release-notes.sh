@@ -8,10 +8,11 @@
 # Helper script for the draft-release GitHub Action workflow.
 #
 # Usage:
-#   compile-release-notes.sh <caller_repo> <template_file> <github_sha> \
-#                            <github_ref_name> <template_repo> <template_ref> \
-#                            <template_path>
+#   compile-release-notes.sh <caller_repo> <github_sha> <github_ref_name>
 #
+# <caller_repo>      - External repository that called this workflow
+# <github_sha>       - SHA of checkout in local-code (Caller repository) for which to generate release notes
+# <github_ref_name>  - refs/tags/v1.0.0, refs/heads/main, or a specific commit SHA
 # Required environment:
 #   GH_TOKEN       - GitHub token for API access
 #   GITHUB_OUTPUT  - Set automatically in GitHub Actions
@@ -23,15 +24,18 @@ error_exit() {
   exit 1
 }
 
-[[ $# -lt 7 ]] && error_exit "Usage: $0 <caller_repo> <template_file> <github_sha> <github_ref_name> <template_repo> <template_ref> <template_path>"
+[[ $# -lt 3 ]] && error_exit "Usage: $0 <caller_repo> <github_sha> <github_ref_name>"
 
 CALLER_REPO="$1"
-TEMPLATE_FILE="$2"
-GITHUB_SHA="$3"
-GITHUB_REF_NAME="$4"
-TEMPLATE_REPO="$5"
-TEMPLATE_REF="$6"
-TEMPLATE_PATH="$7"
+GITHUB_SHA="$2"
+GITHUB_REF_NAME="$3"
+TEMPLATE_REF="${TEMPLATE_REF:-unknown}"
+
+# Dynamically calculate the path relative to where this script lives on disk
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEMPLATE_FILE="$SCRIPT_DIR/../templates/release.yml"
+TEMPLATE_REPO="MetOffice/growss"
+TEMPLATE_PATH="draft-release/templates/release.yml"
 
 # Check for required commands and files
 command -v gh >/dev/null 2>&1 || error_exit "GitHub CLI (gh) is required but not available."
@@ -41,36 +45,29 @@ command -v jq >/dev/null 2>&1 || error_exit "jq is required but not available."
 # Determine previous tag from local-code git history
 # a. Get the most recent tag reachable from the commit before the current GITHUB_SHA.
 PREV_TAG="$(git -C local-code describe --tags --abbrev=0 "${GITHUB_SHA}^" 2>/dev/null || true)"
-# b. Not Implemented: Get the latest tag starting with "v", excluding the current branch/tag name.
+# b. Get the latest tag starting with "v", excluding the current branch/tag name.
 # Sorts by creation date (newest first), takes the top result, and defaults to empty if none exist.
 PREV_TAG0="$(git -C local-code tag --list "v*" --sort=-creatordate | grep -v "^${GITHUB_REF_NAME}$" | head -n 1 || true)"
 
 # -- Debugging output ----------------------------------------------------------
-echo "::group::Caller Repository"
-echo "Caller repository:           ${CALLER_REPO}"
+echo "**Caller Repository**:       ${CALLER_REPO}"
 echo "Current ref name:            ${GITHUB_REF_NAME}"
 echo "Current commit SHA:          ${GITHUB_SHA}"
 echo "Previous tag (v*):           ${PREV_TAG0:-None}"
 echo "Previous tag (git describe): ${PREV_TAG:-None}"
-echo "::endgroup::"
-echo "::group::Template Repository"
-echo "Template repository:         ${TEMPLATE_REPO}"
-echo "Template ref:                ${TEMPLATE_REF}"
+echo "**Template Repository**:     ${TEMPLATE_REPO}"
+echo "Template ref (version):      ${TEMPLATE_REF}"
 echo "Template path:               ${TEMPLATE_PATH}"
 echo "Template file:               ${TEMPLATE_FILE}"
-echo "::endgroup::"
 # ------------------------------------------------------------------------------
 
 if [ -n "$PREV_TAG" ]; then
-  COMPARE_RANGE="${PREV_TAG}...${GITHUB_SHA}"
-  # Single API call to get all commit hashes within the release window
-  gh api "repos/${CALLER_REPO}/compare/${COMPARE_RANGE}" --jq '.commits[].sha' >commit-shas.txt
+  git -C local-code rev-list --max-count=300 "${PREV_TAG}..${GITHUB_SHA}" >commit-shas.txt
 else
   git -C local-code rev-list --max-count=300 "${GITHUB_SHA}" >commit-shas.txt
 fi
 
 # If no commits were found, create a release notes file indicating this and exit early
-# cat commit-shas.txt  # debugging output
 if [ ! -s commit-shas.txt ]; then
   {
     echo "## Changelog"
@@ -82,18 +79,18 @@ if [ ! -s commit-shas.txt ]; then
   exit 0
 fi
 
-# Extract pull requests directly from the repository's main PR list.
-# Pull the 200 most recent merged PRs, then match them against commit-shas.txt
+# Instead of iterating through commits, we pull the 200 most recent merged PRs,
+# (for all PRs use --paginate with single API call) then match them against
+# commit-shas.txt locally.
 {
   gh api "repos/${CALLER_REPO}/pulls?state=closed&per_page=100&page=1"
   gh api "repos/${CALLER_REPO}/pulls?state=closed&per_page=100&page=2"
 } | jq -r '.[] | select(.merged_at != null) |
-  "\(.merge_commit_sha) \(.number) \(.title) | \(.user.login) | \([.labels[].name] | join(","))"' >recent-prs.txt
+  "\(.merge_commit_sha) \(.number) \(.title) | \(.user.login) | \([.labels[].name] | join(",")) | \(.author_association)"' >recent-prs.txt
 
-# -- Filter recent-prs down to ONLY those matching a commit SHA from our release range
+# Filter recent-prs down to ONLY those matching a commit SHA from our release range
 awk 'NR==FNR { shas[tolower($1)]=1; next } (tolower($1) in shas) { print }' commit-shas.txt recent-prs.txt >pr-data.txt
 
-# cat pr-data.txt  # debugging output
 if [ ! -s pr-data.txt ]; then
   {
     echo "## Changelog"
@@ -165,17 +162,37 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
 for i in "${!CATEGORY_TITLES[@]}"; do : >"$tmp_dir/cat_${i}.md"; done
+: >"$tmp_dir/new_contributors.md"  # Create or clear file for new contributors
 
 # Read the local intersected PR file and map categories
 while IFS= read -r row || [ -n "$row" ]; do
   [ -z "$row" ] && continue
 
-  # Row looks like: <merge_sha> <pr_number> <title> | <user> | <labels>
-  metadata=$(echo "$row" | cut -d'|' -f1)
-  user=$(echo "$row" | cut -d'|' -f2 | xargs)
-  labels=$(echo "$row" | cut -d'|' -f3 | xargs)
-  pr=$(echo "$metadata" | awk '{print $2}')
-  title=$(echo "$metadata" | cut -d' ' -f3-)
+  # Row structure: <merge_sha> <pr_number> <title> | <user> | <labels> | <author_association>
+  # Uses ' [|] ' as a definitive delimiter anchor to safely handle titles containing literal '|' characters.
+  regex='^([^[:space:]]+)[[:space:]]+([0-9]+)[[:space:]]+(.*)[[:space:]]\|[[:space:]]+([^|]+)[[:space:]]+\|[[:space:]]*([^|]*)[[:space:]]*\|[[:space:]]*(.*)$'
+
+  if [[ "$row" =~ $regex ]]; then
+    _sha="${BASH_REMATCH[1]}"
+    pr="${BASH_REMATCH[2]}"
+    title="${BASH_REMATCH[3]}"
+    user="${BASH_REMATCH[4]}"
+    user=$(echo "$user" | xargs)
+    labels="${BASH_REMATCH[5]}"
+    labels=$(echo "$labels" | xargs)
+    association="${BASH_REMATCH[6]}"
+    association=$(echo "$association" | xargs)
+  else
+    echo "::warning::Row did not match expected format: $row"
+    continue
+  fi
+
+  # Map New Contributors,without relying on labels
+  if [ "$association" = "FIRST_TIME_CONTRIBUTOR" ]; then
+    if ! grep -q "@${user}" "$tmp_dir/new_contributors.md"; then
+      echo "* @${user} made their first contribution in #${pr}" >> "$tmp_dir/new_contributors.md"
+    fi
+  fi
 
   # Convert labels to an array and normalize to lowercase
   IFS=',' read -r -a label_array <<<"${labels,,}"
@@ -194,20 +211,18 @@ while IFS= read -r row || [ -n "$row" ]; do
 
   pr_line="1. ${title} (@${user}) in #${pr}"
 
-  # Check which categories this PR matches
   for i in "${!CATEGORY_TITLES[@]}"; do
     IFS='|' read -r -a cat_labels <<<"${CATEGORY_LABELS[$i]}"
     matched_this_category=0
-
     for cat_lbl in "${cat_labels[@]}"; do
       for lbl in "${label_array[@]}"; do
         if [ "$lbl" = "$cat_lbl" ]; then
-          # Only append once per category block, even if multiple labels match
+          # Only append once per category block, even if multiple labels match this group
           if [ "$matched_this_category" -eq 0 ]; then
             matched_this_category=1
             echo "$pr_line" >>"$tmp_dir/cat_${i}.md"
           fi
-          break  # Break out of PR labels loop; move to next category label
+          break # Breaks out of the PR labels loop; moves to next category label
         fi
       done
     done
@@ -226,6 +241,13 @@ done <pr-data.txt
       echo
     fi
   done
+
+  if [ -s "$tmp_dir/new_contributors.md" ]; then
+    wrote_any=1
+    echo "### New Contributors 🎉"
+    cat "$tmp_dir/new_contributors.md"
+  fi
+
   [ "$wrote_any" -eq 0 ] && echo "* No pull requests matched release categories."
   if [ -n "$PREV_TAG" ]; then
     echo

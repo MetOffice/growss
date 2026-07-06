@@ -3,7 +3,7 @@
 # The file LICENCE, distributed with this code, contains details of the terms
 # under which the code may be used.
 # ------------------------------------------------------------------------------
-# Simulation Systems Changelog Configuration
+# Simulation Systems Release Changelog Configuration
 
 changelog:
   # Categories are evaluated sequentially from top to bottom.
@@ -61,13 +61,19 @@ changelog:
       labels:
         - "refactor"
 
+    # (build) Changes affecting build tools or external compiler toolchains.
+    # (chore) General housekeeping, license updates, or minor administrative tasks.
+    # (ci) Changes to GitHub Actions workflows, CI/CD pipelines, or other automation.
+    - title: "🛠️ Maintenance"
+      labels:
+        - "build"
+        - "chore"
+        - "ci"
+
   # Global Exclusions: Any PR matching these labels will be completely hidden
   # from the final changelog output, taking ultimate precedence over categories above.
   exclude:
     labels:
-      - "build"  # Changes affecting build tools or external compiler toolchains.
-      - "chore"  # General housekeeping, license updates, or minor administrative tasks.
-      - "ci"  # Modifications to GitHub Actions workflows or automation systems.
       - "ignore-changelog"  # Escape-hatch label to manually suppress a specific PR from the logs.
-      - "test"  # Changes related to testing frameworks or test cases.
-      - "wip"  # Work in progress PRs that are not ready for release.
+      - "test" # Changes related to testing frameworks or test cases.
+      - "wip" # Work in progress PRs that are not ready for release.
