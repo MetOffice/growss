@@ -1,6 +1,6 @@
 # Draft Release - a Shared Global Release Engine
 
-Composite [action](action.yml) that generates categorised draft release notes
+Composite [action](action.yaml) that generates categorised draft release notes
 from merged pull requests and updates (or creates) a draft GitHub Release for
 the current tag.
 
