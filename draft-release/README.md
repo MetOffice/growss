@@ -93,19 +93,19 @@ graph TD
 name: Automated Release Notes
 
 on:
-    push:
-        tags:
-            - "v*"
+  push:
+    tags:
+      - "v*"
 
 jobs:
-    release:
-        runs-on: ubuntu-slim
-        permissions:
-            contents: write
-            pull-requests: read
-        steps:
-            - name: Draft Release
-              uses: MetOffice/growss/draft-release@main  # or tag or sha
+  release:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Draft Release
+        uses: MetOffice/growss/draft-release@main  # or tag or sha
 ```
 
 ## Required Permissions
