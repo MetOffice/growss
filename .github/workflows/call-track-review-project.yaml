@@ -18,13 +18,6 @@ permissions: {}
 
 jobs:
   track_review_project:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'workflow_run' &&
-        github.event.workflow_run.event == 'push' &&
-        github.event.workflow_run.conclusion == 'success'
-      )
     # Granular permissions are safely locked directly to this specific execution context
     permissions:
       actions: read  # Required to view the status of the upstream triggered workflow run
@@ -34,6 +27,6 @@ jobs:
       PROJECT_ACTION_PAT: ${{ secrets.PROJECT_ACTION_PAT }}
     # Optional inputs (with default values)
     with:
-      runner: "ubuntu-24.04"
+      runner: "ubuntu-slim"
       project_org: "MetOffice"
       project_number: 376
