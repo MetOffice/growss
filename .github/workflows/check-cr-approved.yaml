@@ -9,10 +9,13 @@ name: Check CR Approval
 on:
   workflow_call:
 
-permissions: read-all
+permissions:
+  contents: read  # Required to evaluate metadata from the triggering GitHub event context
+  pull-requests: read  # Required to check the PR reviews and approval status
 
 jobs:
   cr_check:
+    name: CR Approval
     runs-on: ubuntu-24.04
     timeout-minutes: 2
 
@@ -24,6 +27,12 @@ jobs:
           REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Ensure context variables are present, don't run from a non-PR event
+          if [[ -z "$PR_NUMBER" ]]; then
+            echo "::error::This workflow must be triggered by a pull_request event."
+            exit 1
+          fi
+
           echo "Running on PR #$PR_NUMBER in Repository $REPO"
 
           # -- 1. Extract the assigned Code Reviewer from the PR body

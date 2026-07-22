@@ -20,18 +20,21 @@ on:
         type: number
         default: 5
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   validate_symlinks:
+    name: Validate Symlinks
     runs-on: ${{ inputs.runner }}
     timeout-minutes: ${{ inputs.timeout }}
 
     steps:
       - name: Checkout Branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
       - name: Find broken symlinks
         run: |
           broken_links=$(find . -path '.git' -prune -o -xtype l -printf '%p -> %l\n' || true)

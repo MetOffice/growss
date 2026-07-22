@@ -68,32 +68,51 @@ on:
         type: boolean
         default: false
 
+# Global baseline configuration: prevents default read/write fallback permissions
+permissions:
+  contents: read  # Required to check out code and scan files using fortitude linter
+
 jobs:
   fortran-linting:
     name: Fortran
     runs-on: ${{ inputs.runner }}
     timeout-minutes: ${{ inputs.timeout }}
-
+    permissions:
+      contents: read  # Required to check out code and scan files using fortitude linter
     env:
       UV_PYTHON: ${{ inputs.python-version }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Setup uv and Python ${{ env.UV_PYTHON }}
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # 8.2.0
         with:
           python-version: ${{ env.UV_PYTHON }}
           enable-cache: ${{ inputs.enable-cache }}
 
       - name: Run Fortitude Linter
+        env:
+          FORTITUDE_VERSION: ${{ inputs.fortitude-version }}
+          FILE_EXTENSIONS: ${{ inputs.file-extensions }}
+          CONFIG_PATH: ${{ inputs.config-path }}
+          SOURCE_PATH: ${{ inputs.source-path }}
+          RESPECT_GITIGNORE: ${{ inputs.respect-gitignore }}
+          SHOW_FIXES: ${{ inputs.show-fixes }}
+          SHOW_STATISTICS: ${{ inputs.show-statistics }}
         run: |
-          uvx --from fortitude-lint==${{ inputs.fortitude-version }} fortitude check \
-            ${{ inputs.respect-gitignore && '--respect-gitignore' || '' }} \
-            ${{ inputs.show-fixes && '--show-fixes' || '' }} \
-            ${{ inputs.show-statistics && '--statistics' || '' }} \
-            --file-extensions=${{ inputs.file-extensions }} \
-            ${{ inputs.config-path && format('--config-file={0}', inputs.config-path) || '' }} \
-            ${{ inputs.source-path }}
+          ARGS=()
+
+          [ "$RESPECT_GITIGNORE" = "true" ] && ARGS+=("--respect-gitignore")
+          [ "$SHOW_FIXES" = "true" ] && ARGS+=("--show-fixes")
+          [ "$SHOW_STATISTICS" = "true" ] && ARGS+=("--statistics")
+
+          uvx --from "fortitude-lint==$FORTITUDE_VERSION" fortitude check \
+            "${ARGS[@]}" \
+            "--file-extensions=$FILE_EXTENSIONS" \
+            ${CONFIG_PATH:+"--config-file=$CONFIG_PATH"} \
+            "$SOURCE_PATH"
         continue-on-error: ${{ !inputs.fail-on-error }}

@@ -16,7 +16,7 @@ on:
         default: 'documentation'
       requirements:
         description: 'Path to the requirements file to install dependencies from'
-        required: true
+        required: false
         type: string
         default: 'requirements.txt'
       sphinx-opts:
@@ -40,11 +40,18 @@ on:
         type: number
         default: 5
 
+permissions:
+  contents: read
+
 jobs:
   build-sphinx-docs:
     name: Build Sphinx Docs
     runs-on: ${{ inputs.runner }}
     timeout-minutes: ${{ inputs.timeout }}
+    permissions:
+      contents: read  # Required to read repository file configurations
+      pages: write  # Required to deploy to GitHub Pages
+
     env:
       DOCS_DIR: ${{ inputs.docs-directory }}
       REQS_FILE: ${{ inputs.requirements }}
@@ -52,10 +59,12 @@ jobs:
       BUILD_DIR: ${{ inputs.build-directory }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -80,7 +89,7 @@ jobs:
 
       - name: Upload artifact to GitHub Pages
         if: ${{ (github.event_name == 'push' || github.event_name == 'merge_group') && github.ref_name == 'main'}}
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9  # v5.0.0
         with:
           name: github-pages
           path: "$BUILD_DIR/html"

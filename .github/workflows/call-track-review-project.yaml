@@ -1,3 +1,9 @@
+# ------------------------------------------------------------------------------
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+# ------------------------------------------------------------------------------
+
 name: Track Review Project
 
 on:
@@ -7,12 +13,20 @@ on:
       - completed
   workflow_dispatch:
 
+# Best Practice: Explicitly strip all top-level default permissions
+permissions: {}
+
 jobs:
   track_review_project:
+    # Granular permissions are safely locked directly to this specific execution context
+    permissions:
+      actions: read  # Required to view the status of the upstream triggered workflow run
+      repository-projects: write  # Required to add or mutate tasks inside GitHub Project 376
     uses: MetOffice/growss/.github/workflows/track-review-project.yaml@main
-    secrets: inherit
+    secrets:
+      PROJECT_ACTION_PAT: ${{ secrets.PROJECT_ACTION_PAT }}
     # Optional inputs (with default values)
     with:
-      runner: "ubuntu-22.04"
+      runner: "ubuntu-slim"
       project_org: "MetOffice"
       project_number: 376

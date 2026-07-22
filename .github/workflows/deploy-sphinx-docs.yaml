@@ -19,19 +19,24 @@ on:
         required: false
         type: number
         default: 5
+
+permissions:
+  contents: read
+
 jobs:
   deploy-sphinx-docs:
+    name: Deploy Sphinx Docs
     runs-on: ${{ inputs.runner }}
     environment:
       name: github-pages
     permissions:
-      contents: read
-      pages: write
-      id-token: write
+      contents: read  # Required to read repository file configurations
+      pages: write  # Required to deploy to GitHub Pages
+      id-token: write  # Required to authenticate with GitHub Pages
     steps:
       - name: Configure GitHub Pages
         id: configure
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d  # v6.0.0
       - name: Deploy GitHub Pages
         id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128  # v5.0.0
