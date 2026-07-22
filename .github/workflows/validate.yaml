@@ -94,7 +94,7 @@ jobs:
 
       - name: Actionlint
         if: always()
-        run: uv run actionlint -shellcheck "-S warning" .github/workflows/*.yaml
+        run: uv run actionlint -shellcheck "shellcheck -S warning" .github/workflows/*.yaml
 
       - name: Zizmor (GitHub Actions security)
         if: always()
