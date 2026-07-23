@@ -37,6 +37,10 @@ jobs:
                 repository(owner: $owner, name: $repo) {
                   pullRequest(number: $pr) {
                     commits(first: 100) {
+                      totalCount
+                      pageInfo {
+                        hasNextPage
+                      }
                       nodes {
                         commit {
                           oid
@@ -58,7 +62,14 @@ jobs:
             };
 
             const result = await github.graphql(query, variables);
-            const commits = result.repository.pullRequest.commits.nodes;
+            const commitsConnection = result.repository.pullRequest.commits;
+            const commits = commitsConnection.nodes;
+
+            // Fail closed if PR exceeds max single-page limits (100 commits)
+            if (commitsConnection.pageInfo.hasNextPage || commitsConnection.totalCount > 100) {
+              core.setFailed(`PR block: Pull Request contains too many commits (${commitsConnection.totalCount}). Maximum supported limit for a automated verification run is 100 commits.`);
+              return;
+            }
 
             // 2. Identify unsigned or validation-failing commits
             const unsignedCommits = commits.filter(c => !c.commit.signature || !c.commit.signature.isValid);
@@ -68,6 +79,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
+              per_page: 100
             });
 
             const existingComment = comments.data.find(c => c.body.includes(commentIdentifier));
@@ -75,7 +87,7 @@ jobs:
             // 4. Handle logic based on validation state
             if (unsignedCommits.length > 0) {
               const commitList = unsignedCommits.map(c => `- \`${c.commit.oid.substring(0, 7)}\``).join('\n');
-              const commentBody = `${commentIdentifier}\n.⚠️ **Unsigned Commits Detected**\n\nThe following commits in this Pull Request are missing a verified cryptographic signature:\n\n${commitList}\n\nPlease sign your commits to comply with <a href="https://metoffice.github.io/simulation-systems/WorkingPractices/gh_authorisation.html#verified-commits">project guidelines</a>.`;
+              const commentBody = `${commentIdentifier}\n ⚠️ **Unsigned Commits Detected**\n\nThe following commits in this Pull Request are missing a verified cryptographic signature:\n\n${commitList}\n\nPlease sign your commits to comply with <a href="https://metoffice.github.io/simulation-systems/WorkingPractices/gh_authorisation.html#verified-commits">project guidelines</a>.`;
 
               if (existingComment) {
                 // Update the old comment with the refreshed list of unsigned commits
@@ -96,7 +108,8 @@ jobs:
               }
 
               // Force the CI status check to fail outright
-              core.setFailed("❌ PR block: One or more commits do not have a verified signature.");
+              core.setFailed("PR block: One or more commits do not have a verified signature.");
+              return;
 
             } else {
               // All commits are signed! Clear old warning comment if it exists
@@ -108,5 +121,5 @@ jobs:
                 });
                 console.log("::notice::Clean state achieved: Deleted the old signature warning comment.");
               }
-              console.log("::success::All commits are properly signed.");
+              console.log("::notice::All commits are properly signed.");
             }
