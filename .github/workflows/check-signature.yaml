@@ -14,7 +14,7 @@ on:
         required: true
         type: number
 
-permissions: {} # Restrict token access to the minimum required for this workflow
+permissions: {}
 
 jobs:
   verify:
@@ -31,7 +31,6 @@ jobs:
           PR_NUMBER: ${{ inputs.pr_number }}
         with:
           script: |
-            // Enforce strictly typed parameter input to prevent code injection
             const prNumber = Number(process.env.PR_NUMBER);
             if (!Number.isInteger(prNumber) || prNumber <= 0) {
               core.setFailed("Invalid PR number input context (expected a positive integer).");
@@ -39,16 +38,22 @@ jobs:
             }
 
             const commentIdentifier = "<!-- id: growss-signature-gate-bot-comment -->";
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
 
             // 1. Fetch verification status of all PR commits using GraphQL API
-            const query = `
-              query($owner: String!, $repo: String!, $pr: Int!) {
+            const unverifiedCommits = [];
+            let hasNextPage = true;
+            let cursor = null;
+
+            const commitQuery = `
+              query($owner: String!, $repo: String!, $pr: Int!, $cursor: String) {
                 repository(owner: $owner, name: $repo) {
                   pullRequest(number: $pr) {
-                    commits(first: 100) {
-                      totalCount
+                    commits(first: 100, after: $cursor) {
                       pageInfo {
                         hasNextPage
+                        endCursor
                       }
                       nodes {
                         commit {
@@ -64,68 +69,61 @@ jobs:
               }
             `;
 
-            const variables = {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pr: prNumber
-            };
+            while (hasNextPage) {
+              const result = await github.graphql(commitQuery, { owner, repo, pr: prNumber, cursor });
+              const connection = result.repository.pullRequest.commits;
 
-            const result = await github.graphql(query, variables);
-            const commitsConnection = result.repository.pullRequest.commits;
-            const commits = commitsConnection.nodes;
+              // Process batch and keep only unverified commits in memory
+              for (const node of connection.nodes) {
+                if (!node.commit.signature || !node.commit.signature.isValid) {
+                  unverifiedCommits.push({ oid: node.commit.oid });
+                }
+              }
 
-            // Fail closed if PR exceeds max single-page limits (100 commits)
-            if (commitsConnection.pageInfo.hasNextPage || commitsConnection.totalCount > 100) {
-              core.setFailed(`PR block: Pull Request contains too many commits (${commitsConnection.totalCount}). Maximum supported limit for an automated verification run is 100 commits.`);
-              return;
+              hasNextPage = connection.pageInfo.hasNextPage;
+              cursor = connection.pageInfo.endCursor;
             }
 
-            // 2. Identify unverified commits (unsigned or signature validation failed)
-            const unverifiedCommits = commits.filter(c => !c.commit.signature || !c.commit.signature.isValid);
+            // The 3rd parameter runs for each page, stripping heavy metadata arrays instantly
+            const matchingComments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number: prNumber, per_page: 100 },
+              (page) => page.data
+                .filter(c => c.body && c.body.includes(commentIdentifier))
+                .map(c => ({ id: c.id, body: c.body })) // Save only ID & body properties
+            );
 
-            // 3. Scan for an existing bot comment to update or delete
-            const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              per_page: 100
-            });
+            // Since our filter/map only targets matched elements, grab the first element if it exists
+            const existingComment = matchingComments[0] || null;
 
-            const existingComment = comments.data.find(c => c.body.includes(commentIdentifier));
-
-            // 4. Handle logic based on validation state
             if (unverifiedCommits.length > 0) {
-              const commitList = unverifiedCommits.map(c => `- \`${c.commit.oid.substring(0, 7)}\``).join('\n');
+              const commitList = unverifiedCommits.map(c => `- \`${c.oid.substring(0, 7)}\``).join('\n');
               const commentBody = `${commentIdentifier}\n ⚠️ **Unverified Commits Detected**\n\nThe following commits in this Pull Request are missing a verified cryptographic signature:\n\n${commitList}\n\nPlease sign your commits to comply with <a href="https://metoffice.github.io/simulation-systems/WorkingPractices/gh_authorisation.html#verified-commits">project guidelines</a>.`;
 
               if (existingComment) {
-                // Update the old comment with the refreshed list of unverified commits
                 await github.rest.issues.updateComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
+                  owner,
+                  repo,
                   comment_id: existingComment.id,
                   body: commentBody
                 });
               } else {
-                // Post a new warning comment
                 await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
+                  owner,
+                  repo,
                   issue_number: prNumber,
                   body: commentBody
                 });
               }
 
-              // Force the CI status check to fail outright
               core.setFailed("PR block: One or more commits do not have a verified signature.");
               return;
 
             } else {
-              // All commits are signed! Clear old warning comment if it exists
               if (existingComment) {
                 await github.rest.issues.deleteComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
+                  owner,
+                  repo,
                   comment_id: existingComment.id
                 });
                 console.log("::notice::Clean state achieved: Deleted the old signature warning comment.");
