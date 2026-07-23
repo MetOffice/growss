@@ -1,4 +1,10 @@
-name: Check PR Commit Signatures
+# ------------------------------------------------------------------------------
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+# ------------------------------------------------------------------------------
+
+name: Verify Commit Signatures
 
 on:
   workflow_call:
@@ -12,6 +18,7 @@ permissions: {} # Restrict token access to the minimum required for this workflo
 
 jobs:
   verify:
+    name: Verify Signatures
     runs-on: ubuntu-slim
     permissions:
       contents: read # Restrict token access strictly to reading repository contents
@@ -20,10 +27,12 @@ jobs:
     steps:
       - name: Check signatures and manage PR comments
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
         with:
           script: |
             // Enforce strictly typed parameter input to prevent code injection
-            const prNumber = Number('${{ inputs.pr_number }}');
+            const prNumber = Number(process.env.PR_NUMBER);
             if (!Number.isInteger(prNumber) || prNumber <= 0) {
               core.setFailed("Invalid PR number input context (expected a positive integer).");
               return;
