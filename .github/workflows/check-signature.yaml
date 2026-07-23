@@ -1,0 +1,112 @@
+name: Check PR Commit Signatures
+
+on:
+  workflow_call:
+    inputs:
+      pr_number:
+        description: 'The Pull Request number to inspect'
+        required: true
+        type: integer
+
+permissions: {} # Restrict token access to the minimum required for this workflow
+
+jobs:
+  verify:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read # Restrict token access strictly to reading repository contents
+      pull-requests: write  # Restrict token access strictly to writing PR comments
+
+    steps:
+      - name: Check signatures and manage PR comments
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            // Enforce strictly typed parameter input to prevent code injection
+            const prNumber = Number('${{ inputs.pr_number }}');
+            if (isNaN(prNumber)) {
+              core.setFailed("Invalid PR number input context.");
+              return;
+            }
+
+            const commentIdentifier = "<!-- id: growss-signature-gate-bot-comment -->";
+
+            // 1. Fetch verification status of all PR commits using GraphQL API
+            const query = `
+              query($owner: String!, $repo: String!, $pr: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $pr) {
+                    commits(first: 100) {
+                      nodes {
+                        commit {
+                          oid
+                          signature {
+                            isValid
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
+            const variables = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pr: prNumber
+            };
+
+            const result = await github.graphql(query, variables);
+            const commits = result.repository.pullRequest.commits.nodes;
+
+            // 2. Identify unsigned or validation-failing commits
+            const unsignedCommits = commits.filter(c => !c.commit.signature || !c.commit.signature.isValid);
+
+            // 3. Scan for an existing bot comment to update or delete
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const existingComment = comments.data.find(c => c.body.includes(commentIdentifier));
+
+            // 4. Handle logic based on validation state
+            if (unsignedCommits.length > 0) {
+              const commitList = unsignedCommits.map(c => `- \`${c.commit.oid.substring(0, 7)}\``).join('\n');
+              const commentBody = `${commentIdentifier}\n.⚠️ **Unsigned Commits Detected**\n\nThe following commits in this Pull Request are missing a verified cryptographic signature:\n\n${commitList}\n\nPlease sign your commits to comply with <a href="https://metoffice.github.io/simulation-systems/WorkingPractices/gh_authorisation.html#verified-commits">project guidelines</a>.`;
+
+              if (existingComment) {
+                // Update the old comment with the refreshed list of unsigned commits
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: commentBody
+                });
+              } else {
+                // Post a new warning comment
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: commentBody
+                });
+              }
+
+              // Force the CI status check to fail outright
+              core.setFailed("❌ PR block: One or more commits do not have a verified signature.");
+
+            } else {
+              // All commits are signed! Clear old warning comment if it exists
+              if (existingComment) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id
+                });
+                console.log("::notice::Clean state achieved: Deleted the old signature warning comment.");
+              }
+              console.log("::success::All commits are properly signed.");
+            }
