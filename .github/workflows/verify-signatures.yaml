@@ -14,6 +14,10 @@ on:
         required: true
         type: number
 
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.pr_number }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
@@ -22,7 +26,7 @@ jobs:
     runs-on: ubuntu-slim
     permissions:
       contents: read # Restrict token access strictly to reading repository contents
-      pull-requests: write  # Restrict token access strictly to writing PR comments
+      pull-requests: write  # Required to manage PR metadata
 
     steps:
       - name: Check signatures and manage PR comments
@@ -95,6 +99,11 @@ jobs:
 
             // Since our filter/map only targets matched elements, grab the first element if it exists
             const existingComment = matchingComments[0] || null;
+
+            // If previous runs created duplicate comments (e.g., due to concurrent runs), delete the extras.
+            for (const c of matchingComments.slice(1)) {
+              await github.rest.issues.deleteComment({ owner, repo, comment_id: c.id });
+            }
 
             if (unverifiedCommits.length > 0) {
               const commitList = unverifiedCommits.map(c => `- \`${c.oid.substring(0, 7)}\``).join('\n');
