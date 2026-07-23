@@ -24,8 +24,8 @@ jobs:
           script: |
             // Enforce strictly typed parameter input to prevent code injection
             const prNumber = Number('${{ inputs.pr_number }}');
-            if (isNaN(prNumber)) {
-              core.setFailed("Invalid PR number input context.");
+            if (!Number.isInteger(prNumber) || prNumber <= 0) {
+              core.setFailed("Invalid PR number input context (expected a positive integer).");
               return;
             }
 
@@ -67,12 +67,12 @@ jobs:
 
             // Fail closed if PR exceeds max single-page limits (100 commits)
             if (commitsConnection.pageInfo.hasNextPage || commitsConnection.totalCount > 100) {
-              core.setFailed(`PR block: Pull Request contains too many commits (${commitsConnection.totalCount}). Maximum supported limit for a automated verification run is 100 commits.`);
+              core.setFailed(`PR block: Pull Request contains too many commits (${commitsConnection.totalCount}). Maximum supported limit for an automated verification run is 100 commits.`);
               return;
             }
 
-            // 2. Identify unsigned or validation-failing commits
-            const unsignedCommits = commits.filter(c => !c.commit.signature || !c.commit.signature.isValid);
+            // 2. Identify unverified commits (unsigned or signature validation failed)
+            const unverifiedCommits = commits.filter(c => !c.commit.signature || !c.commit.signature.isValid);
 
             // 3. Scan for an existing bot comment to update or delete
             const comments = await github.rest.issues.listComments({
@@ -85,12 +85,12 @@ jobs:
             const existingComment = comments.data.find(c => c.body.includes(commentIdentifier));
 
             // 4. Handle logic based on validation state
-            if (unsignedCommits.length > 0) {
-              const commitList = unsignedCommits.map(c => `- \`${c.commit.oid.substring(0, 7)}\``).join('\n');
-              const commentBody = `${commentIdentifier}\n ⚠️ **Unsigned Commits Detected**\n\nThe following commits in this Pull Request are missing a verified cryptographic signature:\n\n${commitList}\n\nPlease sign your commits to comply with <a href="https://metoffice.github.io/simulation-systems/WorkingPractices/gh_authorisation.html#verified-commits">project guidelines</a>.`;
+            if (unverifiedCommits.length > 0) {
+              const commitList = unverifiedCommits.map(c => `- \`${c.commit.oid.substring(0, 7)}\``).join('\n');
+              const commentBody = `${commentIdentifier}\n ⚠️ **Unverified Commits Detected**\n\nThe following commits in this Pull Request are missing a verified cryptographic signature:\n\n${commitList}\n\nPlease sign your commits to comply with <a href="https://metoffice.github.io/simulation-systems/WorkingPractices/gh_authorisation.html#verified-commits">project guidelines</a>.`;
 
               if (existingComment) {
-                // Update the old comment with the refreshed list of unsigned commits
+                // Update the old comment with the refreshed list of unverified commits
                 await github.rest.issues.updateComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
