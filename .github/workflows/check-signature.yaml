@@ -6,7 +6,7 @@ on:
       pr_number:
         description: 'The Pull Request number to inspect'
         required: true
-        type: integer
+        type: number
 
 permissions: {} # Restrict token access to the minimum required for this workflow
 
