@@ -31,14 +31,14 @@ jobs:
 
     steps:
       - name: Checkout Branch
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: pr_branch
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: false
 
       - name: Checkout SimSys_Scripts
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: MetOffice/SimSys_Scripts
           sparse-checkout: umdp3_fixer
@@ -46,7 +46,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python 3.14
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
         with:
           python-version: 3.14
 
