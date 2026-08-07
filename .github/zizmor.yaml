@@ -17,7 +17,8 @@ rules:
     ignore:
       - "call-track-review-project.yaml"
       - "call-trigger-project-workflow.yaml"
-  secrets-inherit:
-    ignore:
-      - "call-track-review-project.yaml"
-      - "call-trigger-project-workflow.yaml"
+      - "call-verify-signatures.yaml"
+  # secrets-inherit:
+  #   ignore:
+  #     - "call-track-review-project.yaml"
+  #     - "call-trigger-project-workflow.yaml"
