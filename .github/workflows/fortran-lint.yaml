@@ -89,7 +89,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup uv and Python ${{ env.UV_PYTHON }}
-        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990  # 8.3.2
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990  # v8.3.2
         with:
           python-version: ${{ env.UV_PYTHON }}
           enable-cache: ${{ inputs.enable-cache }}
