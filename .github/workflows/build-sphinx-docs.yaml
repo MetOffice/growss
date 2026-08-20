@@ -62,7 +62,7 @@ jobs:
     steps:
       - name: Deprecation warning
         run: |
-          echo "::warning title=Workflow Deprecated::This reusable workflow will be removed in future release. Please migrate to sphinx-docs.yaml workflow."
+          echo "::warning title=Workflow Deprecated::This reusable workflow will be removed in next release. Please migrate to sphinx-docs.yaml workflow."
 
           echo "### ⚠️ Deprecation Notice" >> $GITHUB_STEP_SUMMARY
           echo "The \`build-sphinx-docs\` reusable workflow has been **deprecated** and will be removed in the next release." >> $GITHUB_STEP_SUMMARY
