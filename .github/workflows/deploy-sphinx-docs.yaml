@@ -36,7 +36,12 @@ jobs:
     steps:
       - name: Deprecation warning
         run: |
-          echo "::warning title=Deprecated workflow::This reusable workflow is deprecated and will be removed in the future. Please migrate to the sphinx-docs.yaml workflow."
+          echo "::warning title=Workflow Deprecated::This reusable workflow will be removed in future release. Please migrate to sphinx-docs.yaml workflow."
+
+          echo "### ⚠️ Deprecation Notice" >> $GITHUB_STEP_SUMMARY
+          echo "The \`deploy-sphinx-docs\` reusable workflow has been **deprecated** and will be removed in the next release." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> **Migration Path:** Please transition your workflows to use the new unified action instead. Refer to the [sphinx-docs workflow guide](https://github.com/MetOffice/growss/tree/main/sphinx-docs) for details." >> $GITHUB_STEP_SUMMARY
 
       - name: Configure GitHub Pages
         id: configure
