@@ -103,12 +103,14 @@ To sign the CLA for your first contribution:
 
 ## Permissions Required
 
-This workflow requires the following permissions:
+Permissions are managed internally at the job level. The reusable workflow sets
+`permissions: {}` at the workflow level and grants only the minimum required
+permissions directly to the job:
 
 ```yaml
 permissions:
-  contents: read # To checkout repository code
-  pull-requests: write # To add labels and post comments
+  contents: read  # To checkout repository code
+  pull-requests: write  # To add labels and post comments
 ```
 
 ## Security Considerations
@@ -122,6 +124,15 @@ permissions:
 - **Validates username format** to prevent malicious input
 - **Never checks out untrusted code** - only inspects CONTRIBUTORS.md file
 - **Scoped file checking** - only monitors the exact CONTRIBUTORS.md file
+- **Template injection prevention** - all `github.*` and `inputs.*` context
+  values are passed via `env:` vars and read through `process.env` / shell
+  variables rather than being interpolated directly into scripts
+- **API-based merge-ref detection** - uses `gh api` to query PR mergeability
+  instead of `git ls-remote`, avoiding unauthenticated git network calls from
+  forks
+- **GitHub Contents API for CONTRIBUTORS.md comparison** - fetches and compares
+  file content via the GitHub API with base64 decoding and whitespace
+  normalisation, avoiding authenticated git fetches from private fork contexts
 
 ## Licence
 

@@ -1,0 +1,51 @@
+# ------------------------------------------------------------------------------
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+# ------------------------------------------------------------------------------
+#
+# ==============================================================================
+# Dependabot Configuration
+#
+# This configuration automates security updates for third-party GitHub Actions.
+# To protect our downstream consumers, all actions must be pinned to a
+# 40-character commit SHA rather than a mutable version tag.
+#
+# Custom rulesets in place:
+# 1. Monthly Schedule: Checks for updates once a month to minimize noise.
+# 2. Major Version Lock: Automated major updates (e.g., v9 to v10) are blocked
+#    to prevent unexpected breaking code changes.
+# 3. PR Grouping: All discovered minor/patch updates are bundled into a single
+#    monthly Pull Request instead of flooding the repository notifications.
+#
+# How to manually trigger a Major Update:
+# To safely upgrade an action to its next major version baseline:
+#   1. Open the workflow file.
+#   2. Leave the old SHA exactly as it is, but manually change the trailing
+#      comment tag to the new target baseline version (e.g., update the text
+#      from "# v4.0.0" to "# v5.0.0").
+#   3. Push your change. Dependabot will instantly recognize the target update
+#      and generate a new PR containing the correct, matching v5 commit hash.
+# ==============================================================================
+
+version: 2
+updates:
+  # Enable automatic tracking for GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 7
+
+    # Ignore rules to block major version jumps
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+    groups:
+      # Group all action updates into a single PR to reduce noise
+      # Rule applies across every single third-party action used in all workflows
+      github-actions-dependencies:
+        patterns:
+          - "*"

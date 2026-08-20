@@ -25,26 +25,35 @@ on:
         required: false
         type: number
         default: 376  # Simulation Systems Review Tracker
+    secrets:
+      PROJECT_ACTION_PAT:
+        description: 'The PAT used to authorize changes to Organization Project Board 376'
+        required: true
 
 permissions:
-  actions: read
-  contents: read
-  pull-requests: write
+  contents: read  # Required to check out code or parse files safely
 
 jobs:
   track_project:
+    name: Track Review Project
     runs-on: ${{ inputs.runner }}
     timeout-minutes: 5
+    permissions:
+      actions: read  # Required to query the artifact lists
+      contents: read # Required to check out code or parse files safely
+      pull-requests: write  # Required to assign authors or append metadata notes directly on the pull request target
     env:
       REPO: ${{ github.repository }}
 
     steps:
       # Required as running from the workflow_run trigger
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Download PR data artifact
-        uses: actions/github-script@v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -55,7 +64,7 @@ jobs:
             });
 
             let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-              return artifact.name == "context.json"
+              return artifact.name == "context"
             })[0];
 
             let download = await github.rest.actions.downloadArtifact({
@@ -71,7 +80,7 @@ jobs:
       - name: Extract PR Data
         run: |
           unzip -q context.zip
-          jq -r '"PR_NUM=\(.pr_num)\nPR_ID=\(.pr_id)"' context.json >> $GITHUB_ENV
+          jq -r '"PR_NUM=\(.pr_num)\nPR_ID=\(.pr_id)"' context.json >> "$GITHUB_ENV"
 
       - name: Assign Author if no assignees
         continue-on-error: true
@@ -92,23 +101,34 @@ jobs:
 
           # Extract reviewers from PR body
           pr_body=$(echo "$pr_data" | jq -r '.body')
-          sr_expected=$( (echo $pr_body | grep -iq "Sci/Tech Review" && echo "True") || echo "False")
-          scitech_reviewer=$(echo "$pr_body" | perl -00 -ne 's/<!--.*?-->//gs; print if(s/.*Sci\/Tech Reviewer:\s*@([\w\-]{1,39})\b.*/\1\n/s);') || true
-          code_reviewer=$(echo "$pr_body" | perl -00 -ne 's/<!--.*?-->//gs; print if(s/.*Code Reviewer:\s*@([\w\-]{1,39})\b.*/\1\n/s);') || true
+
+          # Using safe Here-strings to preserve multi-line content
+          if grep -iq "Sci/Tech Review" <<< "$pr_body"; then
+            sr_expected="True"
+          else
+            sr_expected="False"
+          fi
+          # Pass string via Here-strings to prevent line skipping or shell expression leaks
+          scitech_reviewer=$(perl -00 -ne 's/<!--.*?-->//gs; print if(s/.*Sci\/Tech Reviewer:\s*@([\w\-]{1,39})\b.*/\1\n/s);' <<< "$pr_body") || true
+          code_reviewer=$(perl -00 -ne 's/<!--.*?-->//gs; print if(s/.*Code Reviewer:\s*@([\w\-]{1,39})\b.*/\1\n/s);' <<< "$pr_body") || true
 
           echo "Expected SciTech Reviewer: ${scitech_reviewer:-None}"
           echo "Expected Code Reviewer: ${code_reviewer:-None}"
-          echo "SCITECH_REVIEWER=$scitech_reviewer" >> $GITHUB_ENV
-          echo "CODE_REVIEWER=$code_reviewer" >> $GITHUB_ENV
+          {
+            echo "SCITECH_REVIEWER=$scitech_reviewer"
+            echo "CODE_REVIEWER=$code_reviewer"
+          } >> "$GITHUB_ENV"
 
           # If the PR is in Draft, then don't request reviews and set state as "In Progress"
           isDraft=$(echo "$pr_data" | jq -r '.isDraft')
           if [[ "$isDraft" == "true" ]]; then
             echo "PR is still in draft. Not requesting reviews or moving from In Progress"
             required_state="In Progress"
-            echo "REQUIRED_STATE=$required_state" >> $GITHUB_ENV
-            echo "SR_REQUEST_REQUIRED=false" >> $GITHUB_ENV
-            echo "CR_REQUEST_REQUIRED=false" >> $GITHUB_ENV
+            {
+              echo "REQUIRED_STATE=$required_state"
+              echo "SR_REQUEST_REQUIRED=false"
+              echo "CR_REQUEST_REQUIRED=false"
+            } >> "$GITHUB_ENV"
             exit 0
           fi
 
@@ -117,7 +137,7 @@ jobs:
           state=$(echo "$pr_data" | jq -r '.state')
           if [[ "$state" != "OPEN" ]]; then
             required_state="Done"
-            echo "REQUIRED_STATE=$required_state" >> $GITHUB_ENV
+            echo "REQUIRED_STATE=$required_state" >> "$GITHUB_ENV"
             exit 0
           fi
 
@@ -133,7 +153,7 @@ jobs:
           cr_approved=$(echo "$reviews" | jq --arg cr "$code_reviewer" '[.reviews[] | select(.author.login == $cr and .state == "APPROVED")] | length')
           cr_changes=$(echo "$reviews" | jq --arg cr "$code_reviewer" '[.reviews[] | select(.author.login == $cr and (.state == "CHANGES_REQUESTED" or .state == "COMMENTED"))] | length')
 
-          [[ "$sr_expected" == "True" ]] && [[ ! -z "$scitech_reviewer" ]] && [[ "$sr_requested" -eq 0 ]] && [[ "$sr_approved" -eq 0 ]] && [[ "$sr_changes" -eq 0 ]] && echo "SR_REQUEST_REQUIRED=true" >> $GITHUB_ENV
+          [[ "$sr_expected" == "True" ]] && [[ ! -z "$scitech_reviewer" ]] && [[ "$sr_requested" -eq 0 ]] && [[ "$sr_approved" -eq 0 ]] && [[ "$sr_changes" -eq 0 ]] && echo "SR_REQUEST_REQUIRED=true" >> "$GITHUB_ENV"
 
           if [[ "$sr_expected" == "False" ]]; then
             echo "Not expecting a SciTech Review for this repository"
@@ -149,13 +169,13 @@ jobs:
             else
               required_state="SciTech Review"
             fi
-            echo "REQUIRED_STATE=$required_state" >> $GITHUB_ENV
+            echo "REQUIRED_STATE=$required_state" >> "$GITHUB_ENV"
             exit 0
           fi
 
           # SR complete or trivial PR so move to code review states
 
-          [[ "$sr_approved" -gt 0 ]] && [[ ! -z "$code_reviewer" ]] && [[ "$cr_requested" -eq 0 ]] && [[ "$cr_approved" -eq 0 ]] && [[ "$cr_changes" -eq 0 ]] && echo "CR_REQUEST_REQUIRED=true" >> $GITHUB_ENV
+          [[ "$sr_approved" -gt 0 ]] && [[ ! -z "$code_reviewer" ]] && [[ "$cr_requested" -eq 0 ]] && [[ "$cr_approved" -eq 0 ]] && [[ "$cr_changes" -eq 0 ]] && echo "CR_REQUEST_REQUIRED=true" >> "$GITHUB_ENV"
 
           if [[ -z "$code_reviewer" ]] && [[ "$cr_changes" -eq 0 ]]; then
             required_state="In Progress"
@@ -167,7 +187,7 @@ jobs:
             required_state="Code Review"
           fi
 
-          echo "REQUIRED_STATE=$required_state" >> $GITHUB_ENV
+          echo "REQUIRED_STATE=$required_state" >> "$GITHUB_ENV"
 
       - name: Request SciTech review, if needed
         if: env.SR_REQUEST_REQUIRED == 'true' && env.REQUIRED_STATE == 'SciTech Review' && env.SCITECH_REVIEWER != ''
@@ -187,8 +207,10 @@ jobs:
       - name: Update project tracking
         env:
           GH_TOKEN: ${{ secrets.PROJECT_ACTION_PAT }}
+          PROJECT_ORG: ${{ inputs.project_org }}
+          PROJECT_NUMBER: ${{ inputs.project_number }}
         run: |
-          # Get project data
+          # Get project metadata
           project_data=$(gh api graphql -f query='
             query($org: String!, $number: Int!) {
               organization(login: $org){
@@ -202,15 +224,24 @@ jobs:
                   }
                 }
               }
-            }' -f org=${{ inputs.project_org }} -F number=${{ inputs.project_number }})
+            }' -f org="$PROJECT_ORG" -F number="$PROJECT_NUMBER")
 
-          project_id=$(echo "$project_data" | jq -r '.data.organization.projectV2.id')
+          project_id=$(echo "$project_data" | jq -r '.data.organization.projectV2.id // empty')
+          if [ -z "$project_id" ]; then
+            echo "::error::Could not resolve Project ID. Check PAT permissions or Project Number."
+            exit 1
+          fi
+
           status_field_id=$(echo "$project_data" | jq -r '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .id')
           status_option_id=$(echo "$project_data" | jq -r --arg status "$REQUIRED_STATE" '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .options[] | select(.name==$status) | .id')
           scitech_field_id=$(echo "$project_data" | jq -r '.data.organization.projectV2.fields.nodes[] | select(.name== "SciTech Review") | .id')
           code_field_id=$(echo "$project_data" | jq -r '.data.organization.projectV2.fields.nodes[] | select(.name== "Code Review") | .id')
 
-          # Add PR to project and update fields
+          # Map reviewers safely to prevent raw GraphQL empty text payload crashes
+          final_cr_val="${CODE_REVIEWER:-None}"
+          final_sr_val="${SCITECH_REVIEWER:-None}"
+
+          # Securely add PR link element to board layout
           item_id=$(gh api graphql -f query='
             mutation($project:ID!, $pr:ID!) {
               addProjectV2ItemById(input: {projectId: $project, contentId: $pr}) {
@@ -218,10 +249,23 @@ jobs:
               }
             }' -f project="$project_id" -f pr="$PR_ID" --jq '.data.addProjectV2ItemById.item.id')
 
-          # Update all fields in single mutation
+          if [[ -z "$item_id" ]]; then
+            echo "::warning::Could not resolve Project Board Item ID. PR may already be tracked."
+            exit 0
+          fi
+
+          # Commit all updates via single atomic multi-mutation to prevent partial update states on the board
           gh api graphql -f query='
             mutation($project: ID!, $item: ID!, $status_field: ID!, $status_value: String!, $cr_field: ID!, $cr_value: String!, $sr_field: ID!, $sr_value: String!) {
               set_status: updateProjectV2ItemFieldValue(input: {projectId: $project, itemId: $item, fieldId: $status_field, value: {singleSelectOptionId: $status_value}}) { projectV2Item { id } }
               set_code_review: updateProjectV2ItemFieldValue(input: {projectId: $project, itemId: $item, fieldId: $cr_field, value: {text: $cr_value}}) { projectV2Item { id } }
               set_scitech_review: updateProjectV2ItemFieldValue(input: {projectId: $project, itemId: $item, fieldId: $sr_field, value: {text: $sr_value}}) { projectV2Item { id } }
-            }' -f project="$project_id" -f item="$item_id" -f status_field="$status_field_id" -f status_value="$status_option_id" -f cr_field="$code_field_id" -f cr_value="$CODE_REVIEWER" -f sr_field="$scitech_field_id" -f sr_value="$SCITECH_REVIEWER" --silent
+            }' \
+            -f project="$project_id" \
+            -f item="$item_id" \
+            -f status_field="$status_field_id" \
+            -f status_value="$status_option_id" \
+            -f cr_field="$code_field_id" \
+            -f cr_value="$final_cr_val" \
+            -f sr_field="$scitech_field_id" \
+            -f sr_value="$final_sr_val" --silent

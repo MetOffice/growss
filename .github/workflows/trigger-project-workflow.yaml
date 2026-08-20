@@ -13,13 +13,16 @@ on:
   workflow_call:
 
 permissions:
-  contents: read
-  pull-requests: write
+  contents: read  # Required to evaluate metadata from the triggering GitHub event context
 
 jobs:
   trigger_project:
+    name: Trigger Project
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read  # Required to evaluate metadata from the triggering GitHub event context
+      pull-requests: write  # Required to modify or comment on pull requests within this pipeline process
     env:
       PR_NUM: ${{ github.event.pull_request.number }}
       PR_ID: ${{ github.event.pull_request.node_id }}
@@ -27,8 +30,8 @@ jobs:
       - name: Triggering Workflow
         run: |
           echo "{\"pr_num\": $PR_NUM, \"pr_id\": \"$PR_ID\"}" >> context.json
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: context.json
+          name: context
           path: context.json
           retention-days: 1

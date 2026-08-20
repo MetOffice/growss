@@ -20,29 +20,36 @@ on:
         type: number
         default: 10
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   umdp3_fixer:
+    name: UMDP3 Fixer
     runs-on: ${{ inputs.runner }}
     timeout-minutes: ${{ inputs.timeout }}
 
     steps:
       - name: Checkout Branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: pr_branch
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
+
       - name: Checkout SimSys_Scripts
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: MetOffice/SimSys_Scripts
           sparse-checkout: umdp3_fixer
           path: SimSys_Scripts
+          persist-credentials: false
+
       - name: Set up Python 3.14
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
         with:
           python-version: 3.14
+
       - name: Run UMDP3 Fixer
         working-directory: ./SimSys_Scripts/umdp3_fixer
         run: |
