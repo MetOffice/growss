@@ -29,6 +29,10 @@ jobs:
       pages: write
       id-token: write
     steps:
+      - name: Deprecation warning
+        run: |
+          echo "::warning title=Deprecated workflow::This reusable workflow is deprecated and will be removed in the future. Please migrate to the sphinx-docs.yaml workflow."
+
       - name: Configure GitHub Pages
         id: configure
         uses: actions/configure-pages@v5

@@ -51,6 +51,10 @@ jobs:
       SPHINX_OPTS: ${{ inputs.sphinx-opts }}
       BUILD_DIR: ${{ inputs.build-directory }}
     steps:
+      - name: Deprecation warning
+        run: |
+          echo "::warning title=Deprecated workflow::This reusable workflow is deprecated and will be removed in the future. Please migrate to the sphinx-docs.yaml workflow."
+
       - name: Checkout repository
         uses: actions/checkout@v6
 
