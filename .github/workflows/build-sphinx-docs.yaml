@@ -3,6 +3,8 @@
 # The file LICENCE, distributed with this code, contains details of the terms
 # under which the code may be used.
 # ------------------------------------------------------------------------------
+# Some of the content of this file has been produced with the assistance of
+# Claude Opus 4.8.
 
 name: Build Sphinx Docs
 
@@ -58,6 +60,15 @@ jobs:
       SPHINX_OPTS: ${{ inputs.sphinx-opts }}
       BUILD_DIR: ${{ inputs.build-directory }}
     steps:
+      - name: Deprecation warning
+        run: |
+          echo "::warning title=Workflow Deprecated::This reusable workflow will be removed in next release. Please migrate to sphinx-docs.yaml workflow."
+
+          echo "### ⚠️ Deprecation Notice" >> $GITHUB_STEP_SUMMARY
+          echo "The \`build-sphinx-docs\` reusable workflow has been **deprecated** and will be removed in the next release." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> **Migration Path:** Please transition your workflows to use the new unified action instead. Refer to the [sphinx-docs workflow guide](https://github.com/MetOffice/growss/tree/main/sphinx-docs) for details." >> $GITHUB_STEP_SUMMARY
+
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
