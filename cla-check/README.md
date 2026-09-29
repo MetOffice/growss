@@ -7,10 +7,9 @@ Contributor License Agreement (CLA) by checking their presence in the
 ## Features
 
 - ✅ Automatically checks if PR authors have signed the CLA
-- 🏷️ Manages PR labels (`cla-signed`, `cla-required`, `cla-modified`)
+- 🏷️ Manages PR labels (`cla-signed`, `cla-required`)
 - 💬 Posts helpful comments guiding contributors through the CLA process
 - 🔄 Validates both base and PR branches for existing signatures
-- 🛡️ Prevents unauthorised modifications to the `CONTRIBUTORS.md` file
 
 ## Usage
 
@@ -82,8 +81,6 @@ The workflow manages the following labels:
 
 - **🔵 cla-signed**: Author has signed the CLA in this PR (new contributor)
 - **🔴 cla-required**: Author needs to sign the CLA before the PR can be merged
-- **🟠 cla-modified**: Author modified CONTRIBUTORS.md when already signed
-  (requires admin review)
 
 ## For Contributors
 
