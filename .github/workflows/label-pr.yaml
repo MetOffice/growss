@@ -9,10 +9,16 @@ name: Label PR
 on:
   workflow_call:
 
+permissions: {}
+
 jobs:
   label:
+    name: Label
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.head.repo.fork }}
+    permissions:
+      contents: read  # Required for checking out code or referencing internal workflow actions
+      pull-requests: write  # Required for the composite action to add or remove labels on the PR
     steps:
       - name: Add label `contributor`
         if: ${{ github.event.action == 'opened' }}

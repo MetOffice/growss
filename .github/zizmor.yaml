@@ -1,0 +1,23 @@
+# ------------------------------------------------------------------------------
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+# ------------------------------------------------------------------------------
+
+# Rules for Zizmor GitHub workflow linter. This file is used to configure which
+# rules to ignore for specific workflow files, allowing for exceptions to be
+# made where necessary while still enforcing best practices across the codebase.
+rules:
+  unpinned-uses:
+    ignore:
+      - "call-track-review-project.yaml"
+      - "call-trigger-project-workflow.yaml"
+      - "label-pr.yaml"
+  dangerous-triggers:
+    ignore:
+      - "call-track-review-project.yaml"
+      - "call-trigger-project-workflow.yaml"
+  secrets-inherit:
+    ignore:
+      - "call-track-review-project.yaml"
+      - "call-trigger-project-workflow.yaml"

@@ -5,7 +5,21 @@ description = "GitHub Reusable Workflows for Simulation Systems"
 readme = "README.md"
 requires-python = ">=3.12.9"
 dependencies = [
+    "actionlint-py==1.7.12.24",
     "ruff==0.14.4",
     "shellcheck-py==0.11.0.1",
     "yamllint==1.37.1",
+    "rumdl==0.2.10",
+    "zizmor==1.25.2",
 ]
+
+[tool.rumdl]
+respect-gitignore = true
+exclude = [
+    ".github/pull_request_template.md",
+]
+[tool.rumdl.MD013]
+line-length = 80        # Keeps normal paragraph text restricted to 80 chars
+code-blocks = false     # Disables the 80 char limit strictly for fenced code blocks
+tables = false          # Fixed: Disables the 80 char limit strictly for tables
+headings = false

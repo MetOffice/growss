@@ -16,10 +16,10 @@ concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
-
   validate:
     name: QC
     runs-on: ubuntu-24.04
@@ -30,16 +30,18 @@ jobs:
       UV_PYTHON: "3.14"
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990  # v8.3.2
         with:
           python-version: ${{ env.UV_PYTHON }}
           enable-cache: true
 
       - name: Restore uv cache
-        uses: actions/cache@v4
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25  # v5.1.0
         with:
           path: ${{ env.UV_CACHE_DIR }}
           key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
@@ -56,6 +58,7 @@ jobs:
       - name: Python Lint
         if: always()
         run: uv run ruff check --respect-gitignore .
+
       - name: Python Format Check
         if: always()
         run: uv run ruff format --check --diff -s --respect-gitignore .
@@ -64,19 +67,43 @@ jobs:
         if: always()
         shell: bash
         run: |
+          # Identify potential shell scripts by looking for files with typical
+          # shell script extensions (.sh, .bash, .etc) or no extension, while excluding
+          # files in version control directories and virtual environments.
           mapfile -d '' potential_files < <(
             find . -type f \( -name "*.*sh" -o ! -name "*.*" \) \
             -not -path "*.git/*" -not -path "*.venv/*" -print0
           )
           if [ ${#potential_files[@]} -eq 0 ]; then
-            echo "No shell scripts to check."
+            echo "::notice::No files found with matching pattern to inspect."
             exit 0
           fi
-          printf "%s\0" "${potential_files[@]}" \
-            | xargs -0 file | grep "shell script" | cut -d: -f1 \
-            | xargs -r uv run shellcheck -S warning \
-            && echo "All checks passed!"
+
+          # Extract shell scripts into an array, safely handling grep exit codes
+          mapfile -t shell_files < <(printf "%s\0" "${potential_files[@]}" \
+            | xargs -0 file | grep "shell script" | cut -d: -f1 || true)
+
+          if [ ${#shell_files[@]} -eq 0 ]; then
+            echo "::notice::No shell scripts detected."
+            exit 0
+          fi
+
+          # Run shellcheck on discovered files, treating warnings as errors
+          uv run shellcheck -S warning "${shell_files[@]}" && echo "✅ All checks passed!"
         continue-on-error: true
+
+      - name: Actionlint
+        if: always()
+        run: uv run actionlint -shellcheck "shellcheck -S warning" .github/workflows/*.yaml
+
+      - name: Zizmor (GitHub Actions security)
+        if: always()
+        run: uv run zizmor .github/workflows/
+
+      - name: Markdown Lint
+        if: always()
+        run: |
+          uv run rumdl check .
 
       - name: Minimize uv cache
         run: uv cache prune --ci
