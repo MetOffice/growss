@@ -102,77 +102,6 @@ jobs:
             echo "🔴 CONTRIBUTORS.md file does not exist on PR branch."
           fi
 
-      - name: Check Merge Ref Exists
-        id: check_merge_ref
-        working-directory: ./base_branch
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          # Use gh api to query pull request metadata directly
-          # without network git ls-remote authentication
-          mergeable=$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER" --jq ".mergeable" 2>/dev/null || echo "undefined")
-          if [ "$mergeable" != "undefined" ]; then
-            echo "merge_ref_defined=true" >> "$GITHUB_ENV"
-          else
-            echo "merge_ref_defined=false" >> "$GITHUB_ENV"
-          fi
-
-      - name: Checkout Merge Branch
-        if: env.merge_ref_defined == 'true'
-        id: checkout_merge
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        continue-on-error: true
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          persist-credentials: false
-          ref: "refs/pull/${{ github.event.number }}/merge"
-          path: merge_branch
-          allow-unsafe-pr-checkout: true  # allow checking out PR head refs from forks
-
-      - name: Check if CONTRIBUTORS.md was modified in PR
-        id: check_contributors_modified
-        shell: bash
-        env:
-          # This token is safely scoped to job-level permissions
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: ${{ github.repository }}
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
-          # Use the safe PR number context to completely avoid the private fork 404
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          if [ "$merge_ref_defined" = "false" ]; then
-            echo "::warning::Merge conflicts detected. The CONTRIBUTORS.md modification check was skipped, but the workflow has been allowed to pass. Please resolve conflicts."
-            echo "modified=false" >> "$GITHUB_OUTPUT"
-          else
-            # 1. Fetch raw CONTRIBUTORS.md from the base branch path securely
-            gh api "repos/$REPOSITORY/contents/CONTRIBUTORS.md?ref=$BASE_REF" \
-              --jq '.content' | base64 -d > base_raw.txt 2>/dev/null || touch base_raw.txt
-
-            # 2. Fetch CONTRIBUTORS.md from the repository using the unified PR head reference.
-            # This completely bypasses the private fork 404 authentication barrier.
-            gh api "repos/$REPOSITORY/contents/CONTRIBUTORS.md?ref=refs/pull/$PR_NUMBER/head" \
-              --jq '.content' | base64 -d > pr_raw.txt 2>/dev/null || touch pr_raw.txt
-
-            # 3. Clean and normalise files using pure shell primitives
-            tr -d '[:space:]' < base_raw.txt > base_clean.txt 2>/dev/null || touch base_clean.txt
-            tr -d '[:space:]' < pr_raw.txt > pr_clean.txt 2>/dev/null || touch pr_clean.txt
-
-            # 4. Perform a direct text comparison on the squashed data
-            if ! cmp -s base_clean.txt pr_clean.txt; then
-              echo "modified=true" >> "$GITHUB_OUTPUT"
-              echo "📝 CONTRIBUTORS.md content was substantively modified (additions or deletions detected)."
-            else
-              echo "modified=false" >> "$GITHUB_OUTPUT"
-              echo "ℹ️ CONTRIBUTORS.md content was NOT substantively modified (whitespace only or unchanged)."
-            fi
-
-            # Clean up the localised workspace
-            rm -f base_raw.txt pr_raw.txt base_clean.txt pr_clean.txt
-          fi
-
       # -- Manage PR Labels, Comments, and Final Status (Consolidated)
       - name: Manage CLA Status, Labels, and Comments
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd  # v8.0.0
@@ -182,24 +111,18 @@ jobs:
         env:
           SIGNED_ON_BASE: ${{ steps.check_contributor_base.outputs.on_base }}
           SIGNED_ON_PR: ${{ steps.check_contributor_pr.outputs.on_pr }}
-          CONTRIBUTORS_MODIFIED: ${{ steps.check_contributors_modified.outputs.modified }}
           CLA_URL: ${{ inputs.cla-url }}
+          VALIDATED_AUTHOR: ${{ steps.validate_author.outputs.validated_author }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const signedOnBase = process.env.SIGNED_ON_BASE === 'true';
             const signedOnPr = process.env.SIGNED_ON_PR === 'true';
-            const contributorsModified = process.env.CONTRIBUTORS_MODIFIED === 'true';
             const issue_number = context.issue.number;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
-            const author = context.payload.pull_request.user.login;
-            // Validate author (GitHub usernames are alphanumeric + hyphens)
-            if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/.test(author)) {
-              console.error(`::error::Invalid username format: ${author}`);
-              process.exit(1);
-            }
+            const author = process.env.VALIDATED_AUTHOR;
 
             const claUrl = process.env.CLA_URL;
             // Validate CLA URL
@@ -212,10 +135,6 @@ jobs:
               console.error(`Invalid CLA URL: ${error.message}`);
               throw error;
             }
-
-            // Check if contributor was on base but modified the file
-            // This may be valid but will require an admin to ok it
-            const invalidModify = signedOnBase && contributorsModified;
 
             // Helper function to create or update a label with a specific COLOUR
             async function ensureLabel(name, COLOUR, description) {
@@ -248,7 +167,6 @@ jobs:
             // Define desired COLOURs and descriptions for consistency
             const COLOUR_SIGNED = '0052cc'; // Blue
             const COLOUR_REQUIRED = 'b60205'; // Red
-            const COLOUR_MODIFIED = 'f56f27'; // Orange
 
             // Helper function to delete old CLA-related comments from this bot
             async function deleteOldClaComments() {
@@ -284,46 +202,15 @@ jobs:
               }
             }
 
-            console.log(`Base: ${signedOnBase}, PR: ${signedOnPr}, Modified: ${contributorsModified}, Invalid Modify: ${invalidModify}`);
-
-            // Handle case where contributor modified the file when already on it
-            if (invalidModify) {
-              await ensureLabel('cla-modified', COLOUR_MODIFIED, 'The CLA has been modified as part of this PR - added by GA');
-              console.log('⚠️ Contributor was in base branch but has modified the file.');
-
-              // Ensure labels are correct
-              await Promise.allSettled([
-                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-signed' }),
-                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-required' }),
-                github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['cla-modified'] })
-              ]);
-
-              // Delete old CLA comments before posting new one
-              await deleteOldClaComments();
-
-              // Post warning comment
-              const commentBody = `⚠️ Hello @${author}!\n\nYour CLA signature was found on the base branch, but you appear to have modified the _CONTRIBUTORS.md_ file in this PR.\n\nPlease do not edit the _CONTRIBUTORS.md_ file. If you have already signed the CLA, revert changes to the file and your signature will be picked up.`;
-
-              await github.rest.issues.createComment({ owner, repo, issue_number, body: commentBody });
-
-              // Fail the GitHub Action run
-              console.error("⚠️ Contributor edited the CONTRIBUTORS file when already on base.");
-              process.exit(1);
-            }
+            console.log(`Base: ${signedOnBase}, PR: ${signedOnPr}`);
 
             if (signedOnBase) {
 
-              // Different messages based on scenario
-              if (signedOnBase && !contributorsModified) {
-                console.log('✅ CLA already signed on base branch, and CONTRIBUTORS.md not modified in PR.');
-              } else {
-                console.log('✅ CLA condition met. Removing required label and adding signed label.');
-              }
+              console.log('✅ CLA already signed on base branch');
 
-              // Remove all CLA-related labels when signed on base and file not modified
+              // Remove all CLA-related labels when signed on base
               await Promise.allSettled([
                 github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-required' }),
-                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-modified' }),
                 github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-signed' })
               ]);
 
@@ -336,7 +223,6 @@ jobs:
               console.log('✅ New contributor has signed the CLA in PR branch.');
               await Promise.allSettled([
                 github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-required' }),
-                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-modified' }),
                 github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['cla-signed'] })
               ]);
 
@@ -350,7 +236,6 @@ jobs:
               // Ensure labels are correct
               await Promise.allSettled([
                 github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-signed' }),
-                github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'cla-modified' }),
                 github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['cla-required'] })
               ]);
 
