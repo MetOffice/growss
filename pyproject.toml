@@ -18,6 +18,12 @@ respect-gitignore = true
 exclude = [
     ".github/pull_request_template.md",
 ]
+disable = [
+    "MD033",  # Inline HTML
+    "MD034",  # Bare URL used
+    "MD036",  # Emphasis used instead of a header
+    "MD041",  # First line in file should be a top level header
+]
 [tool.rumdl.MD013]
 line-length = 80        # Keeps normal paragraph text restricted to 80 chars
 code-blocks = false     # Disables the 80 char limit strictly for fenced code blocks

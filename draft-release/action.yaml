@@ -1,0 +1,49 @@
+# ------------------------------------------------------------------------------
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+# ------------------------------------------------------------------------------
+
+name: Shared Global Release Engine
+description: Automates draft releases using centralised assets
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout caller repository with full history
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        path: local-code
+        fetch-depth: 0
+        fetch-tags: true
+        persist-credentials: false
+
+    - name: Compile categorised release notes from template labels
+      id: compile-release-notes
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        CALLER_REPO: ${{ github.repository }}
+        GITHUB_REF_NAME: ${{ github.ref_name }}
+        GITHUB_SHA: ${{ github.sha }}
+      run: |
+        set -euo pipefail
+        bash "${{ github.action_path }}/bin/compile-release-notes.sh" \
+          "$CALLER_REPO" "$GITHUB_SHA" "$GITHUB_REF_NAME"
+
+    - if: steps.compile-release-notes.outputs.has_commits == 'true'
+      shell: bash
+      working-directory: local-code
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GITHUB_REF_NAME: ${{ github.ref_name }}
+      run: |
+        set -euo pipefail
+        TITLE="Release ${GITHUB_REF_NAME} (Draft)"
+        if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+          gh release edit "${GITHUB_REF_NAME}" --draft --title "${TITLE}"  \
+            --notes-file ../release-notes.md
+        else
+          gh release create "${GITHUB_REF_NAME}" --draft --title "${TITLE}" \
+            --notes-file ../release-notes.md
+        fi
