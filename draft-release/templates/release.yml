@@ -1,0 +1,79 @@
+# ------------------------------------------------------------------------------
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+# ------------------------------------------------------------------------------
+# Simulation Systems Release Changelog Configuration
+
+changelog:
+  # Categories are evaluated sequentially from top to bottom.
+  # If a PR has multiple matching labels, it will appear in all matching categories.
+
+  categories:
+    # (breaking-change) Critical infrastructure changes or API removals.
+    - title: "💥 Breaking Changes"
+      labels:
+        - "breaking-change"
+
+    # (dependency) Updates to third-party dependencies, including security patches.
+    - title: "📦 Dependency Updates"
+      labels:
+        - "dependency"
+
+    # (deprecated) Features or APIs that are being phased out, but still functional.
+    - title: "⚠️ Deprecations"
+      labels:
+        - "deprecated"
+
+    # (bugfix) Placed near the top so that bug fixes always take priority
+    # over general scientific updates or refactoring.
+    - title: "🐛 Bug Fixes"
+      labels:
+        - "bugfix"
+
+    # (feature) Standard customer-facing features and structural additions.
+    - title: "✨ New Features"
+      labels:
+        - "feature"
+
+    # (science) Domain-specific mathematical changes or model updates.
+    # (technical) Deep algorithmic optimisations or background logic shifts.
+    - title: "🔬 Scientific & Algorithmic Updates"
+      labels:
+        - "science"
+        - "technical"
+
+    # (documentation) Changes isolated to READMEs, inline code docstrings,
+    # scientific documentation, working practices, or
+    # other non-functional documentation updates.
+    - title: "📚 Documentation"
+      labels:
+        - "documentation"
+
+    # (optimisation) Direct speed execution metrics, runtime improvements,
+    #  Memory, storage, or other resource optimisations.
+    - title: "⚡ Performance Improvements"
+      labels:
+        - "optimisation"
+
+    # (refactor) Code cleanup, modularisation, or other internal improvements.
+    - title: "♻️ Refactoring"
+      labels:
+        - "refactor"
+
+    # (build) Changes affecting build tools or external compiler toolchains.
+    # (chore) General housekeeping, license updates, or minor administrative tasks.
+    # (ci) Changes to GitHub Actions workflows, CI/CD pipelines, or other automation.
+    - title: "🛠️ Maintenance"
+      labels:
+        - "build"
+        - "chore"
+        - "ci"
+
+  # Global Exclusions: Any PR matching these labels will be completely hidden
+  # from the final changelog output, taking ultimate precedence over categories above.
+  exclude:
+    labels:
+      - "ignore-changelog"  # Escape-hatch label to manually suppress a specific PR from the logs.
+      - "test" # Changes related to testing frameworks or test cases.
+      - "wip" # Work in progress PRs that are not ready for release.
