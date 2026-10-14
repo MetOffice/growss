@@ -1,0 +1,16 @@
+name: Coordinate Signature Verification
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  verify-signatures:
+    uses: ./.github/workflows/verify-signatures.yaml
+    with:
+      pr_number: ${{ github.event.pull_request.number }}
+    permissions:
+      contents: read # Necessary to fetch base repository environment details
+      pull-requests: write  # Required to manage PR metadata

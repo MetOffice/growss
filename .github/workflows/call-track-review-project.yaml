@@ -18,16 +18,14 @@ permissions: {}
 
 jobs:
   track_review_project:
-    # Granular permissions are safely locked directly to this specific execution context
-    permissions:
-      actions: read  # Required to check out code or parse files safely
-      contents: read  # Required to read the upstream triggered workflow run artifact status
-      pull-requests: write  # Required to add comments or update metadata on the PR
-    uses: MetOffice/growss/.github/workflows/track-review-project.yaml@0f9ffe6a138ae9943053621916a850a075997db8 # v1.0.0
+    uses: ./.github/workflows/track-review-project.yaml
     secrets:
       PROJECT_ACTION_PAT: ${{ secrets.PROJECT_ACTION_PAT }}
-    # Optional inputs (with default values)
     with:
       runner: "ubuntu-slim"
       project_org: "MetOffice"
       project_number: 376
+    permissions:
+      actions: read  # Required to check out code or parse files safely
+      contents: read  # Required to read the upstream triggered workflow run artifact status
+      pull-requests: write  # Required to add comments or update metadata on the PR
