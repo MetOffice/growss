@@ -3,6 +3,8 @@
 # The file LICENCE, distributed with this code, contains details of the terms
 # under which the code may be used.
 # ------------------------------------------------------------------------------
+# Some of the content of this file has been produced with the assistance of
+# Claude Opus 4.8.
 
 name: Deploy Sphinx Docs
 
@@ -34,6 +36,15 @@ jobs:
       pages: write  # Required to deploy to GitHub Pages
       id-token: write  # Required to authenticate with GitHub Pages
     steps:
+      - name: Deprecation warning
+        run: |
+          echo "::warning title=Workflow Deprecated::This reusable workflow will be removed in the next release. Please migrate to sphinx-docs.yaml workflow."
+
+          echo "### ⚠️ Deprecation Notice" >> $GITHUB_STEP_SUMMARY
+          echo "The \`deploy-sphinx-docs\` reusable workflow has been **deprecated** and will be removed in the next release." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> **Migration Path:** Please transition your workflows to use the new unified action instead. Refer to the [sphinx-docs workflow guide](https://github.com/MetOffice/growss/tree/main/sphinx-docs) for details." >> $GITHUB_STEP_SUMMARY
+
       - name: Configure GitHub Pages
         id: configure
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d  # v6.0.0

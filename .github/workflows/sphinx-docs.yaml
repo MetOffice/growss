@@ -126,7 +126,7 @@ jobs:
         run: echo "SPHINX_DEBUG=-v --show-traceback" >> "$GITHUB_ENV"
 
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -205,7 +205,7 @@ jobs:
 
       - name: Cache virtual environment
         id: cache-venv
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25  # v5.1.0
         with:
           path: ${{ env.VENV_PATH }}
           key: ${{ runner.os }}-${{ env.PYTHON_VRSN }}-${{ hashFiles('pyproject.toml', format('{0}/pyproject.toml', inputs.docs-dir), format('{0}/pyproject.toml', inputs.source-dir), format('{0}/conf.py', inputs.source-dir)) }}
