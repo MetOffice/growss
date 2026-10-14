@@ -1,0 +1,57 @@
+# ------------------------------------------------------------------------------
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+# ------------------------------------------------------------------------------
+
+name: Lint
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: "The runner to use for the job"
+        required: false
+        type: string
+        default: "ubuntu-latest"
+      timeout:
+        description: "The maximum time in minutes the job can run for"
+        required: false
+        type: number
+        default: 10
+      ruff-version:
+        description: "The ruff linter version to use"
+        required: false
+        type: string
+        default: "0.15.0"
+      source-path:
+        description: "Path to source code directory to lint"
+        required: false
+        type: string
+        default: "."
+      fail-on-error:
+        description: "Whether to fail the workflow on linting errors"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  python-linting:
+    name: Python
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+
+      - name: Run Ruff over directory
+        uses: astral-sh/ruff-action@0ce1b0bf8b818ef400413f810f8a11cdbda0034b # v4.0.0
+        with:
+          version: ${{ inputs.ruff-version }}
+          src: ${{ inputs.source-path }}
+        continue-on-error: ${{ !inputs.fail-on-error }}
